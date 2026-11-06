@@ -5,5 +5,25 @@
   },
   "flutter": {
     "state_management": "undecided"
+  },
+  "product": {
+    "mvp_audience": "solo_teacher_or_solo_school",
+    "teachers_per_organization": 1,
+    "multi_teacher_schools": "out_of_mvp"
+  },
+  "billing": {
+    "provider": "asaas",
+    "enforced": false,
+    "current_plan": "free",
+    "plans": {
+      "free": { "students": 5, "storage_mb": 50, "file_max_mb": 10, "price": 0 },
+      "professor": {
+        "students": 50,
+        "storage_mb": 1024,
+        "file_max_mb": 20,
+        "monthly_price": 29.9,
+        "yearly_price": 299
+      }
+    }
   }
 }

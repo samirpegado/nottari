@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -10,7 +11,6 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  MessageCircle,
   Printer,
   Search,
   SlidersHorizontal,
@@ -22,7 +22,7 @@ import {
   markChargePaid,
   undoChargePayment,
   type ChargeRow,
-} from "@/app/mensalidades/actions"
+} from "@/app/faturamento/actions"
 import { StudentAvatar } from "@/components/teacher/student-avatar"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +33,7 @@ import {
   displayStatus,
   formatAmountInput,
   formatBrl,
+  chargeKindLabel,
   formatCompetence,
   formatCompetenceLong,
   formatDateBr,
@@ -79,7 +80,7 @@ export function ChargesBoard({
               today,
               studentId: studentFilter?.id,
               status,
-              path: "/mensalidades/relatorio",
+              path: "/faturamento/relatorio",
             })}
             className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto")}
           >
@@ -126,7 +127,7 @@ export function ChargesBoard({
               <thead className="bg-[#F8FAFC] text-left text-xs font-semibold tracking-wide text-[#64748B] uppercase">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Aluno</th>
-                  <th className="px-4 py-3 font-semibold">Competência</th>
+                  <th className="px-4 py-3 font-semibold">Referência</th>
                   <th className="px-4 py-3 font-semibold">Vencimento</th>
                   <th className="px-4 py-3 font-semibold">Valor</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
@@ -141,7 +142,14 @@ export function ChargesBoard({
                       <td className="px-4 py-3">
                         <StudentLink row={row} />
                       </td>
-                      <td className="px-4 py-3 text-[#334155]">{formatCompetence(row.competence)}</td>
+                      <td className="px-4 py-3 text-[#334155]">
+                        <p>{chargeKindLabel(row.kind)}</p>
+                        <p className="text-xs text-[#94A3B8]">
+                          {row.kind === "one_off"
+                            ? formatDateBr(row.dueDate)
+                            : formatCompetence(row.competence)}
+                        </p>
+                      </td>
                       <td className="px-4 py-3 text-[#334155]">{formatDateBr(row.dueDate)}</td>
                       <td className="px-4 py-3 font-medium tabular-nums">{formatBrl(row.amount)}</td>
                       <td className="px-4 py-3">
@@ -265,8 +273,11 @@ function ChargeCard({
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
         <div>
-          <dt className="text-xs text-[#94A3B8]">Competência</dt>
-          <dd className="font-medium">{formatCompetence(row.competence)}</dd>
+          <dt className="text-xs text-[#94A3B8]">Referência</dt>
+          <dd className="font-medium">
+            {chargeKindLabel(row.kind)} ·{" "}
+            {row.kind === "one_off" ? formatDateBr(row.dueDate) : formatCompetence(row.competence)}
+          </dd>
         </div>
         <div>
           <dt className="text-xs text-[#94A3B8]">Vencimento</dt>
@@ -328,7 +339,7 @@ function RowActions({
       {paid ? (
         <>
           <Link
-            href={`/mensalidades/${row.id}/recibo`}
+            href={`/faturamento/${row.id}/recibo`}
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             <FileText data-icon="inline-start" />
@@ -350,10 +361,11 @@ function RowActions({
               href={whatsapp}
               target="_blank"
               rel="noreferrer"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
+              aria-label="Cobrar no WhatsApp"
+              title="WhatsApp"
+              className="inline-flex size-8 shrink-0 items-center justify-center"
             >
-              <MessageCircle data-icon="inline-start" />
-              WhatsApp
+              <Image src="/whatsapp.png" alt="" width={32} height={32} className="size-8" />
             </a>
           ) : null}
         </>
@@ -396,7 +408,7 @@ function FiltersModal({
   }
 
   function clear() {
-    router.replace("/mensalidades")
+    router.replace("/faturamento")
     onClose()
   }
 
@@ -520,7 +532,8 @@ function PayModal({
           Marcar como pago
         </h2>
         <p className="mt-1 text-sm text-[#64748B]">
-          {row.studentName} · {formatCompetence(row.competence)}
+          {row.studentName} · {chargeKindLabel(row.kind)} ·{" "}
+          {row.kind === "one_off" ? formatDateBr(row.dueDate) : formatCompetence(row.competence)}
         </p>
         <div className="mt-4 flex flex-col gap-3">
           <label className="flex flex-col gap-1.5 text-sm font-medium">
@@ -611,8 +624,10 @@ function UndoModal({ row, onClose }: { row: ChargeRow; onClose: () => void }) {
           Estornar pagamento
         </h2>
         <p className="mt-2 text-sm text-[#475569]">
-          Voltar a mensalidade de <span className="font-semibold text-[#0B1220]">{row.studentName}</span>{" "}
-          ({formatCompetence(row.competence)}) para em aberto?
+          Voltar a cobrança de <span className="font-semibold text-[#0B1220]">{row.studentName}</span>{" "}
+          ({chargeKindLabel(row.kind)} ·{" "}
+          {row.kind === "one_off" ? formatDateBr(row.dueDate) : formatCompetence(row.competence)}) para em
+          aberto?
         </p>
         {error ? <p className="mt-3 text-sm text-[#B91C1C]">{error}</p> : null}
         <div className="mt-5 flex justify-end gap-2">
@@ -902,11 +917,11 @@ function MonthPicker({
 }
 
 function emptyLabel(month: string, today: string, filtered: boolean) {
-  if (filtered) return "Nenhuma mensalidade com esses filtros."
+  if (filtered) return "Nenhuma cobrança com esses filtros."
   if (month > today.slice(0, 7)) {
-    return `As mensalidades de ${formatCompetenceLong(month)} são geradas no começo do mês.`
+    return `As cobranças de ${formatCompetenceLong(month)} são geradas no começo do mês.`
   }
-  return "Nenhuma mensalidade neste mês. Matrículas com cobrança mensal aparecem aqui no começo do mês."
+  return "Nenhuma cobrança neste mês. Mensalidades, hora/aula e aulas avulsas aparecem aqui."
 }
 
 function chargesHref({
@@ -914,7 +929,7 @@ function chargesHref({
   today,
   studentId,
   status,
-  path = "/mensalidades",
+  path = "/faturamento",
 }: {
   month: string
   today: string
@@ -931,5 +946,11 @@ function chargesHref({
 }
 
 function chargeMessage(row: ChargeRow) {
+  if (row.kind === "one_off") {
+    return `Olá, ${row.studentName}! A aula avulsa de ${formatDateBr(row.dueDate)} no valor de ${formatBrl(row.amount)} está em aberto.`
+  }
+  if (row.kind === "lesson") {
+    return `Olá, ${row.studentName}! As aulas de ${formatCompetence(row.competence)} no valor de ${formatBrl(row.amount)} vencem em ${formatDateBr(row.dueDate)}.`
+  }
   return `Olá, ${row.studentName}! A mensalidade de ${formatCompetence(row.competence)} no valor de ${formatBrl(row.amount)} vence em ${formatDateBr(row.dueDate)}.`
 }

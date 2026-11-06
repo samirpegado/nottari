@@ -449,19 +449,24 @@ function ChargeCard({
 }) {
   return (
     <section className="rounded-[22px] border border-[#e2e8f0] bg-white p-4">
-      <h2 className="text-sm font-semibold">Mensalidades</h2>
+      <h2 className="text-sm font-semibold">Faturamento</h2>
       {charge ? (
         <p className="mt-3 text-sm text-[#334155]">
-          {formatCompetence(charge.competence)} · {formatBrl(charge.amount)} · {statusLabel(charge.status)}
+          {formatCompetence(charge.competence)} · {formatBrl(charge.amount)} ·{" "}
+          {charge.totalCount > 1
+            ? charge.openCount > 0
+              ? `${charge.openCount} em aberto`
+              : "tudo pago"
+            : statusLabel(charge.status)}
         </p>
       ) : (
         <p className="mt-3 text-sm text-[#64748B]">Nenhuma cobrança neste mês.</p>
       )}
       <Link
-        href={`/mensalidades?aluno=${studentId}`}
+        href={`/faturamento?aluno=${studentId}`}
         className="mt-3 inline-flex text-sm font-semibold text-[#1D4ED8] hover:underline"
       >
-        Ver mensalidades
+        Ver faturamento
       </Link>
     </section>
   )
@@ -490,7 +495,7 @@ function AccessCard({ studentId, name, phone }: { studentId: string; name: strin
     if (!value) return
     const href = whatsappHref(
       phone,
-      `Olá, ${name}! Seu acesso à área do aluno no Nottari:\nTelefone: ${formatBrPhone(phone)}\nPIN: ${value}`,
+      `Olá, ${name}! Seu acesso à área do aluno no Nottari:\nAbra o site, toque em Aluno e entre com:\nTelefone: ${formatBrPhone(phone)}\nPIN: ${value}`,
     )
     if (href) window.open(href, "_blank", "noopener,noreferrer")
   }

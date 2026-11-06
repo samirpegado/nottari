@@ -176,7 +176,7 @@ function ChargeBadge({ status }: { status: StudentRow["chargeStatus"] }) {
   if (status === "pending") {
     return (
       <div className="flex flex-col gap-0.5 rounded-xl border border-[#fde68a] bg-[#fffbeb] px-2.5 py-2">
-        <span className="text-[11px] font-medium text-[#78350f]">Mensalidade</span>
+        <span className="text-[11px] font-medium text-[#78350f]">Cobrança</span>
         <span className="flex items-center gap-1.5 text-sm font-semibold text-[#92400e]">
           <span className="size-1.5 rounded-full bg-[#d97706]" />
           Pendente
@@ -187,7 +187,7 @@ function ChargeBadge({ status }: { status: StudentRow["chargeStatus"] }) {
   if (status === "ok") {
     return (
       <div className="flex flex-col gap-0.5 rounded-xl border border-[#a7f3d0] bg-[#ecfdf5] px-2.5 py-2">
-        <span className="text-[11px] font-medium text-[#065f46]">Mensalidade</span>
+        <span className="text-[11px] font-medium text-[#065f46]">Cobrança</span>
         <span className="flex items-center gap-1.5 text-sm font-semibold text-[#047857]">
           <span className="size-1.5 rounded-full bg-[#059669]" />
           Em dia
@@ -197,7 +197,7 @@ function ChargeBadge({ status }: { status: StudentRow["chargeStatus"] }) {
   }
   return (
       <div className="flex flex-col gap-0.5 rounded-xl border border-[#e8edf4] bg-[#f8fafc] px-2.5 py-2">
-      <span className="text-[11px] font-medium text-[#64748B]">Mensalidade</span>
+      <span className="text-[11px] font-medium text-[#64748B]">Cobrança</span>
       <span className="text-sm font-semibold text-[#0B1220]">—</span>
     </div>
   )

@@ -49,7 +49,7 @@ aluno, o bloco "Onde paramos" e um board de duas colunas.
 ┌─ PRONTUÁRIO (coluna principal) ─────────┐  ┌─ RAIL (direita) ─────────┐
 │ ● Qua, 04 nov · Feita                    │  │ Metrônomo                │
 │   Bona, pág. 34 · 80 BPM                 │  │ Matrícula                │
-│                                          │  │ Mensalidades             │
+│                                          │  │ Faturamento              │
 │ [ Materiais do aluno ] [ Acesso / PIN ]  │  │                          │
 └──────────────────────────────────────────┘  └──────────────────────────┘
 ```
@@ -189,15 +189,15 @@ do aluno no meio da aula.
 
 ---
 
-## 8. Matrícula, mensalidades e acesso
+## 8. Matrícula, faturamento e acesso
 
 No rail direito, junto do metrônomo:
 
 - **Matrícula**: tipo de cobrança (Mensalidade/Hora-aula), valor, dia de
   vencimento e horários fixos; botões **Editar matrícula** e **Encerrar
   matrícula**. Sem matrícula ativa: texto + atalho para matricular pela Agenda.
-- **Mensalidades**: resumo da competência corrente (status + valor) e link para
-  `/mensalidades` filtrado por este aluno.
+- **Faturamento**: resumo da competência corrente (status + valor, incluindo
+  hora/aula e avulsas) e link para `/faturamento` filtrado por este aluno.
 
 Ao lado dos materiais, abaixo do prontuário:
 
@@ -276,7 +276,7 @@ cartões de apoio.
 
 ## 12. Fora do MVP
 
-- Edição pelo aluno (continua só leitura na área dele).
+- Edição pelo aluno (a área em `/area` é só leitura: tarefa, próximas aulas, materiais e metrônomo).
 - Gráfico de evolução de BPM/presença ao longo do tempo.
 - Anexar material específico a uma observação (depende de `lesson_note_materials`).
 - Gravar áudio da aula / anotações por voz.

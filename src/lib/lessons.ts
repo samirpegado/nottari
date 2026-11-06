@@ -39,6 +39,16 @@ export function formatLessonStamp(iso: string, todayYmd: string) {
   return year === todayYmd.slice(0, 4) ? label : `${label} ${year}`
 }
 
+export function formatLessonWhen(iso: string, todayYmd: string) {
+  const time = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(iso))
+  return `${formatLessonStamp(iso, todayYmd)} · ${time}`
+}
+
 export function formatRelativeAgo(iso: string, todayYmd: string) {
   const ymd = saoPauloNow(new Date(iso)).ymd
   if (ymd === todayYmd) return "hoje"

@@ -22,9 +22,9 @@ que foi feito → cobrar quando vence. Os menos usados ficam embaixo.
 | 1 | **Início** | Tela de pouso após login; resumo do dia | feito |
 | 2 | **Alunos** | O horário só existe se o aluno já estiver cadastrado | feito (lista, cadastro e board) |
 | 3 | **Agenda** | Semana com horários livres e ocupados | feito |
-| 4 | **Mensalidades** | Controle financeiro, uso semanal/mensal | feito |
+| 4 | **Faturamento** | Controle financeiro, uso semanal/mensal | feito |
 | 5 | **Materiais** | Biblioteca; consultado com menos frequência | feito |
-| 6 | **Configurações** | Conta, plano, dados da organização | a fazer |
+| 6 | **Configurações** | Conta, plano, dados da organização | feito |
 
 A ordem atual do menu já segue isso. Dois ajustes recomendados:
 
@@ -53,17 +53,18 @@ Valem para todas as telas, para manter consistência com a identidade:
 
 ## 1. Início (dashboard)
 
-**Objetivo:** em 3 segundos o professor sabe como está o dia.
+**Objetivo:** em 3 segundos o professor sabe como está o mês.
 
 Ordem dos elementos:
 
 1. Saudação "Olá, {primeiro nome}!" + nome da organização.
-2. Três números do dia: **Aulas hoje**, **Alunos hoje**, **Mensalidades em aberto**.
+2. Números do **mês corrente**: aulas, concluídas, faltas e mensalidades em
+   aberto (só a competência atual, não o histórico de meses anteriores).
 3. **Próximas aulas** (lista): aluno, horário, peça/assunto da última aula, status.
 4. (fase 2) Atalhos: "Registrar aula de agora", "Cobrar em atraso".
 
-Dados: `lessons` do dia e futuras, `lesson_notes` (última peça), `charges` em
-aberto. Estado vazio: convidar a cadastrar o primeiro aluno.
+Dados: `lessons` do mês, `lesson_notes` (última peça), `charges` da competência
+corrente em aberto. Estado vazio: convidar a cadastrar o primeiro aluno.
 
 ---
 
@@ -157,7 +158,7 @@ Dados: `lessons` (status) + `lesson_notes` (peça, bpm, measure, homework, notes
 
 ---
 
-## 5. Mensalidades
+## 5. Faturamento
 
 **Objetivo:** ver quem deve e cobrar em um toque.
 
@@ -167,14 +168,14 @@ Datatable com o **mês corrente** por padrão. Ordem dos elementos:
 2. Botão **Filtros**: período (default mês corrente), aluno (busca ajax,
    default todos) e status (default todos). Botão **Imprimir PDF** do mês
    (resumo + em aberto + pagos).
-3. Lista: aluno, competência, vencimento, valor, status.
+3. Lista: aluno, referência (mensalidade ou aula), vencimento, valor, status.
 4. Ações por linha: **marcar como pago**, **emitir recibo em PDF**, **cobrar no
    WhatsApp** e **estornar**.
 
-A cobrança do mês nasce no começo da competência com status **A vencer** e vira
-**Atrasado** depois do vencimento sem baixa. Dados: `charges` (`competence`,
-`due_date`, `amount`, `status`, `paid_at`). Sem processar pagamento no MVP:
-baixa é manual.
+A cobrança do mês nasce no começo da competência (mensalidade, hora/aula e
+avulsa) com status **A vencer** e vira **Atrasado** depois do vencimento sem
+baixa. Dados: `charges` (`competence`, `due_date`, `amount`, `status`,
+`paid_at`). Sem processar pagamento no MVP: baixa é manual.
 
 Especificação completa (geração, status, ações, recibo, migrações) em
 [`docs/mensalidades.md`](mensalidades.md).
@@ -225,37 +226,44 @@ Acesso: botão fixo sempre visível e embutido no registro de aula.
 
 ## 8. Configurações
 
-Ordem dos elementos:
+Rota `/configuracoes`. Ordem dos elementos:
 
-1. Conta: nome, e-mail, telefone, senha.
-2. Organização: nome e, na fase 2, professores/papéis.
-3. Pagamento: chave Pix usada nas cobranças.
-4. Plano e uso: limite de alunos e de armazenamento.
-5. Sair.
+1. **Logo** (recibos).
+2. **Dados gerais:** seu nome, nome da escola (opcional; se preenchido, entra nos documentos), e-mail, telefone, site e endereço (CEP via ViaCEP).
+3. **Plano e faturamento:** uso atual (alunos e armazenamento), cards dos planos e últimas faturas do Asaas.
 
-Dados: `members`, `organizations`.
+Planos do MVP (cota e alunos ainda não bloqueiam; cobrança Asaas na próxima etapa):
+
+| Plano | Alunos ativos | Armazenamento | Por arquivo | Preço |
+| --- | --- | --- | --- | --- |
+| Gratuito | 5 | 50 MB | 10 MB | R$ 0 |
+| Professor | 50 | 1 GB | 20 MB | R$ 29,90/mês ou R$ 299/ano |
+
+Dados: `organizations` (incluindo `logo_path`). Bucket privado `org-branding`. Sair continua no rodapé do menu.
+
+Especificação em [`docs/configuracoes.md`](configuracoes.md).
 
 ---
 
 ## Área do aluno (outra superfície, acesso por telefone + PIN)
 
-Depois do login (`student_login`), a ordem prioriza o dia do aluno:
+Rota `/area`. Login em `/` na aba **Aluno** (`student_login`, cookie httpOnly).
+Somente leitura no MVP. É o board do professor, resumido:
 
 1. Saudação + **tarefa atual** (última `lesson_note`: peça, BPM, tarefa).
-2. **Próximas aulas**.
-3. **Metrônomo**.
-4. **Materiais** atribuídos.
-5. **Linha do tempo** da evolução.
+2. **Aulas do mês corrente** (exceto remarcadas), no fuso America/Sao_Paulo.
+3. **Materiais** atribuídos (abrir arquivo/link).
+4. **Metrônomo** no BPM da última aula.
 
-Somente leitura no MVP. Dados vêm de `student_home` e afins.
+Dados: `student_home` e `student_open_material`. Sem prontuário editável, matrícula ou cobrança.
 
 ---
 
 ## Resumo da ordem de construção sugerida
 
 1. Início (feito) → 2. Alunos (lista + cadastro + board da aula) → 3. Registro
-de aula + metrônomo (no board do aluno) → 4. Agenda → 5. Mensalidades (feito) →
-6. Materiais (feito) → 7. Área do aluno → 8. Configurações.
+de aula + metrônomo (no board do aluno) → 4. Agenda → 5. Faturamento (feito) →
+6. Materiais (feito) → 7. Área do aluno (feito) → 8. Configurações (feito).
 
 Essa ordem entrega primeiro o núcleo das dores (registrar aula, onde parou,
 metrônomo) antes das partes mais pesadas de agenda e cobrança.

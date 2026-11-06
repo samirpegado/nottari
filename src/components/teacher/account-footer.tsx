@@ -12,7 +12,7 @@ export function AccountFooter({
   return (
     <div className="border-t border-white/10 p-4">
       <p className="truncate text-sm font-medium">{name}</p>
-      <p className="truncate text-xs text-[#94A3B8]">{organization}</p>
+      {organization ? <p className="truncate text-xs text-[#94A3B8]">{organization}</p> : null}
       <SignOutButton className="mt-3" />
     </div>
   )

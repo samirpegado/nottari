@@ -70,7 +70,7 @@ export function TeacherDrawer({
 
   return (
     <>
-      <header className="flex items-center gap-2 bg-[#0B1220] px-3 py-3 text-[#F8FAFC] md:hidden">
+      <header className="z-40 flex h-14 shrink-0 items-center gap-2 bg-[#0B1220] px-3 text-[#F8FAFC] md:hidden">
         <button
           type="button"
           onClick={() => setOpen(true)}

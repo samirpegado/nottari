@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { signedPhotoUrl } from "@/app/alunos/actions"
 import { displayStatus } from "@/lib/charges"
+import { ensureCurrentMonthCharges } from "@/app/faturamento/actions"
 import {
   isLessonStatus,
   lessonHasNote,
@@ -71,10 +72,10 @@ export type StudentBoard = {
   scheduleBlocks: { id: string; weekday: number; startMinutes: number; durationMinutes: number }[]
   materials: AssignedMaterial[]
   charge: {
-    id: string
     competence: string
-    dueDate: string
     amount: number
+    openCount: number
+    totalCount: number
     status: "pending" | "due_today" | "overdue" | "paid"
   } | null
 }
@@ -112,6 +113,8 @@ export async function getStudentBoard(
   const enrollmentIds = (enrollmentsResult.data ?? []).map((row) => row.id as string)
   const plan = (enrollmentsResult.data ?? []).find((row) => row.active) ?? null
 
+  await ensureCurrentMonthCharges()
+
   const [rulesResult, timelineResult, lastNoteResult, materialsResult, chargeResult, photoUrl] =
     await Promise.all([
       supabase
@@ -138,13 +141,14 @@ export async function getStudentBoard(
         .select("materials(id, title, type)")
         .eq("organization_id", organizationId)
         .eq("student_id", student.id),
-      supabase
-        .from("charges")
-        .select("id, competence, due_date, amount, status")
-        .eq("organization_id", organizationId)
-        .eq("student_id", student.id)
-        .eq("competence", monthStart)
-        .maybeSingle(),
+      enrollmentIds.length > 0
+        ? supabase
+            .from("charges")
+            .select("id, competence, due_date, amount, status")
+            .eq("organization_id", organizationId)
+            .in("enrollment_id", enrollmentIds)
+            .eq("competence", monthStart)
+        : Promise.resolve({ data: [], error: null }),
       signedPhotoUrl(supabase, (student.photo_path as string | null) ?? null),
     ])
 
@@ -175,16 +179,7 @@ export async function getStudentBoard(
   }
   materials.sort((a, b) => a.title.localeCompare(b.title, "pt-BR"))
 
-  const chargeRow = chargeResult.data
-  const charge = chargeRow
-    ? {
-        id: chargeRow.id as string,
-        competence: String(chargeRow.competence).slice(0, 7),
-        dueDate: String(chargeRow.due_date).slice(0, 10),
-        amount: Number(chargeRow.amount),
-        status: displayStatus(String(chargeRow.status), String(chargeRow.due_date).slice(0, 10), today),
-      }
-    : null
+  const charge = summarizeBoardCharges(chargeResult.data ?? [], today)
 
   return {
     ok: true,
@@ -364,6 +359,7 @@ export async function saveLessonNote(input: {
     if (error) return fail("Não foi possível salvar a observação.")
   }
 
+  await ensureCurrentMonthCharges()
   refresh(student.id as string)
   return { ok: true as const }
 }
@@ -534,6 +530,33 @@ async function loadTimelinePage(
   }
 }
 
+function summarizeBoardCharges(
+  rows: { competence: string; due_date: string; amount: number | string; status: string }[],
+  today: string,
+): StudentBoard["charge"] {
+  if (rows.length === 0) return null
+  let openAmount = 0
+  let openCount = 0
+  let worst: NonNullable<StudentBoard["charge"]>["status"] = "paid"
+  for (const row of rows) {
+    const shown = displayStatus(String(row.status), String(row.due_date).slice(0, 10), today)
+    if (shown === "paid") continue
+    openAmount += Number(row.amount ?? 0)
+    openCount += 1
+    if (shown === "overdue") worst = "overdue"
+    else if (worst !== "overdue" && shown === "due_today") worst = "due_today"
+    else if (worst === "paid") worst = "pending"
+  }
+  const totalAmount = rows.reduce((sum, row) => sum + Number(row.amount ?? 0), 0)
+  return {
+    competence: String(rows[0]?.competence ?? "").slice(0, 7),
+    amount: openCount > 0 ? openAmount : totalAmount,
+    openCount,
+    totalCount: rows.length,
+    status: openCount > 0 ? worst : "paid",
+  }
+}
+
 function toEntry(row: {
   id: string
   scheduled_at: string
@@ -596,6 +619,8 @@ function refresh(studentId: string) {
   revalidatePath("/alunos")
   revalidatePath("/inicio")
   revalidatePath("/agenda")
+  revalidatePath("/faturamento")
+  revalidatePath("/mensalidades")
 }
 
 function fail(error: string) {

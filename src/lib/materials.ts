@@ -1,8 +1,9 @@
+import { CURRENT_PLAN_ID, fileMaxBytes, planById } from "@/lib/plans"
 import { addDays, saoPauloNow } from "@/lib/schedule"
 import { DEFAULT_STUDENT_COLOR, STUDENT_COLORS, isStudentColor } from "@/lib/student-profile"
 
 export const MATERIALS_BUCKET = "materials"
-export const MATERIAL_MAX_BYTES = 20 * 1024 * 1024
+export const MATERIAL_MAX_BYTES = fileMaxBytes(planById("professor"))
 export const DEFAULT_FOLDER_COLOR = "#8B5CF6"
 export const FOLDER_COLORS = STUDENT_COLORS
 
@@ -51,8 +52,10 @@ export function detectMaterialFile(file: File) {
     return { ok: false as const, error: "Envie PDF, Word (.doc/.docx) ou MP3. Vídeo entra como link." }
   }
   if (file.size <= 0) return { ok: false as const, error: "Esse arquivo está vazio." }
-  if (file.size > MATERIAL_MAX_BYTES) {
-    return { ok: false as const, error: "Cada arquivo pode ter até 20 MB." }
+  const maxBytes = fileMaxBytes(planById(CURRENT_PLAN_ID))
+  if (file.size > maxBytes) {
+    const maxMb = planById(CURRENT_PLAN_ID).fileMaxMb
+    return { ok: false as const, error: `Cada arquivo pode ter até ${maxMb} MB neste plano.` }
   }
   const chosen = match.mime.includes(mime) ? mime : match.mime[0]
   return {

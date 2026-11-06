@@ -8,13 +8,16 @@ export async function getTeacherContext() {
 
   const { data: membership } = await supabase
     .from("members")
-    .select("display_name, organization_id, organizations(name)")
+    .select("display_name, organization_id, organizations(name, type)")
     .eq("user_id", auth.user.id)
     .limit(1)
     .maybeSingle()
 
   const organization = one(
-    membership?.organizations as { name: string } | { name: string }[] | null,
+    membership?.organizations as
+      | { name: string; type: string }
+      | { name: string; type: string }[]
+      | null,
   )
 
   const fullName =
@@ -24,9 +27,16 @@ export async function getTeacherContext() {
     supabase,
     userId: auth.user.id,
     organizationId: membership?.organization_id ?? null,
-    organizationName: organization?.name || "Sua conta",
+    organizationName: displaySchoolName(organization),
     fullName,
   }
+}
+
+export function displaySchoolName(
+  org: { name?: string | null; type?: string | null } | null | undefined,
+) {
+  if (!org || org.type !== "school") return ""
+  return org.name?.trim() || ""
 }
 
 function one<T>(value: T | T[] | null | undefined): T | null {

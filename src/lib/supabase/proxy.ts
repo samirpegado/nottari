@@ -28,14 +28,21 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname
   const signedIn = Boolean(data.user)
 
-  const teacherArea = ["/inicio", "/alunos", "/agenda", "/mensalidades", "/materiais"].some(
+  const teacherArea = ["/inicio", "/alunos", "/agenda", "/faturamento", "/mensalidades", "/materiais", "/configuracoes"].some(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   )
+  const studentArea = path === "/area" || (path.startsWith("/area/") && path !== "/area/sair")
+  const studentToken = request.cookies.get("nottari_student")?.value
+
   if (teacherArea && !signedIn) {
     return withSessionCookies(response, NextResponse.redirect(new URL("/", request.url)))
   }
 
-  if (path === "/" && signedIn) {
+  if (studentArea && !studentToken) {
+    return withSessionCookies(response, NextResponse.redirect(new URL("/?aluno=1", request.url)))
+  }
+
+  if (path === "/" && signedIn && request.nextUrl.searchParams.get("aluno") !== "1") {
     return withSessionCookies(response, NextResponse.redirect(new URL("/inicio", request.url)))
   }
 

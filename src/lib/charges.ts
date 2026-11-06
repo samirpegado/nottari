@@ -8,6 +8,7 @@ export const PAYMENT_METHODS = [
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number]["value"]
 export type ChargeStatusFilter = "all" | "pending" | "overdue" | "paid"
 export type ChargeDisplayStatus = "pending" | "due_today" | "overdue" | "paid"
+export type ChargeKind = "monthly" | "lesson" | "one_off"
 
 export const CHARGE_MONTHS_AHEAD = 2
 export const CHARGE_MONTHS_BACK = 24
@@ -160,6 +161,12 @@ export function isPaymentMethod(value: string): value is PaymentMethod {
 
 export function paymentMethodLabel(value: string | null | undefined) {
   return PAYMENT_METHODS.find((method) => method.value === value)?.label ?? value ?? ""
+}
+
+export function chargeKindLabel(kind: ChargeKind) {
+  if (kind === "one_off") return "Avulsa"
+  if (kind === "lesson") return "Aula"
+  return "Mensalidade"
 }
 
 export function whatsappHref(phone: string, text: string) {

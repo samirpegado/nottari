@@ -17,6 +17,7 @@ import {
   upcomingDates,
 } from "@/lib/schedule"
 import { getTeacherContext } from "@/lib/teacher"
+import { ensureCurrentMonthCharges } from "@/app/faturamento/actions"
 
 const durations: readonly number[] = DURATIONS
 
@@ -181,7 +182,7 @@ export async function assignSlot(input: {
 
   const { data: enrollment } = await supabase
     .from("enrollments")
-    .select("id")
+    .select("id, billing_type")
     .eq("organization_id", organizationId)
     .eq("student_id", student.id)
     .eq("active", true)
@@ -241,24 +242,48 @@ export async function assignSlot(input: {
   }
 
   const dates = oneOff ? [slotDate] : upcomingDates(weekday, slotDate, LESSON_HORIZON)
-  const { error: lessonsError } = await supabase.from("lessons").insert(
-    dates.map((ymd) => ({
-      organization_id: organizationId,
-      enrollment_id: enrollmentId,
-      schedule_rule_id: rule.id,
-      scheduled_at: slotIso(ymd, startMinutes),
-      duration_minutes: duration,
-      status: "scheduled",
-    })),
-  )
+  const { data: createdLessons, error: lessonsError } = await supabase
+    .from("lessons")
+    .insert(
+      dates.map((ymd) => ({
+        organization_id: organizationId,
+        enrollment_id: enrollmentId,
+        schedule_rule_id: rule.id,
+        scheduled_at: slotIso(ymd, startMinutes),
+        duration_minutes: duration,
+        status: "scheduled",
+      })),
+    )
+    .select("id")
 
   if (lessonsError) {
     await supabase.from("schedule_rules").delete().eq("id", rule.id)
     return { ok: false as const, error: "Não foi possível gerar as aulas desse horário." }
   }
 
+  if (oneOff && enrollment?.billing_type === "monthly" && createdLessons?.length) {
+    const { error: chargeError } = await supabase.from("charges").insert(
+      createdLessons.map((lesson) => ({
+        organization_id: organizationId,
+        enrollment_id: enrollmentId,
+        competence: `${slotDate.slice(0, 7)}-01`,
+        due_date: slotDate,
+        amount,
+        status: "pending",
+        lesson_id: lesson.id,
+      })),
+    )
+    if (chargeError) {
+      return { ok: false as const, error: "A aula foi marcada, mas a cobrança avulsa não foi gerada." }
+    }
+  }
+
+  await ensureCurrentMonthCharges()
   revalidatePath("/agenda")
   revalidatePath("/inicio")
+  revalidatePath("/faturamento")
+  revalidatePath("/mensalidades")
+  revalidatePath("/alunos")
   return { ok: true as const }
 }
 
@@ -417,8 +442,12 @@ export async function updateSlot(input: {
     }
   }
 
+  await ensureCurrentMonthCharges()
   revalidatePath("/agenda")
   revalidatePath("/inicio")
+  revalidatePath("/faturamento")
+  revalidatePath("/mensalidades")
+  revalidatePath("/alunos")
   return { ok: true as const }
 }
 

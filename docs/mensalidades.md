@@ -1,8 +1,8 @@
-# Mensalidades — especificação da seção
+# Faturamento — especificação da seção
 
-Guia de implementação da tela **Mensalidades** (menu 4) e de como as cobranças
-(`charges`) nascem, mudam de status e são quitadas. A régua é a mesma do resto
-do produto: simples, que o professor resolva em um toque.
+Guia de implementação da tela **Faturamento** (menu 4, rota `/faturamento`) e
+de como as cobranças (`charges`) nascem, mudam de status e são quitadas. A régua
+é a mesma do resto do produto: simples, que o professor resolva em um toque.
 
 Escopo do MVP: **só controle** (quem deve, quanto, quando vence, baixa manual e
 recibo). Nada de processar pagamento.
@@ -22,7 +22,7 @@ regra escolhida é mais previsível:
 
 > A cobrança de um mês (competência) é criada **no começo da própria
 > competência**, já com status `pending` (que a UI mostra como **A vencer**).
-> Assim, ao abrir Mensalidades no mês corrente, todas as mensalidades do mês já
+> Assim, ao abrir Faturamento no mês corrente, as cobranças do mês já
 > existem — vençam no dia 5 ou no dia 28.
 
 O status `pending` cobre tanto "a vencer" quanto "vence hoje"; vira **Atrasado**
@@ -31,7 +31,7 @@ quando passa do vencimento sem baixa (ver seção 3).
 ### Mecanismo: geração idempotente, dois gatilhos para a mesma função
 
 O coração é uma função **idempotente** que garante as cobranças de uma
-competência. A `UNIQUE (enrollment_id, competence)` já existente faz o
+competência. A unicidade `(enrollment_id, competence)` faz o
 `insert ... on conflict do nothing` ser seguro para rodar quantas vezes
 quiser.
 
@@ -51,35 +51,51 @@ Ela é chamada de dois lugares:
 2. **Agendado (recomendado, quando habilitarmos `pg_cron`):** um job diário
    chama `ensure_month_charges(date_trunc('month', now()))` e marca atrasados
    (seção 3). Mantém o resumo do **Início** correto mesmo que o professor não
-   abra Mensalidades. Enquanto o cron não existir, o passo 1 cobre o uso real.
+   abra Faturamento. Enquanto o cron não existir, o passo 1 cobre o uso real.
 
 > Decisão: começar **só com o passo 1** (lazy). Habilitar `pg_cron` é um
 > incremento isolado que não muda a UI nem a função.
 
 ### Quais matrículas geram cobrança
 
-`ensure_month_charges` percorre `enrollments` e cria uma `charge` por matrícula
-que satisfaça **todas**:
+A tela **Faturamento** (`/faturamento`) lista **todas** as cobranças da
+competência: mensalidade, hora/aula e aula avulsa.
 
-- `billing_type = 'monthly'` (hora/aula e **aula avulsa** não geram
-  mensalidade);
+**Mensalidade** — uma `charge` por matrícula, se satisfizer **todas**:
+
+- `billing_type = 'monthly'`;
 - `active = true`;
 - `due_day` preenchido (1–31);
 - a competência é **>=** ao mês de `start_date`;
 - a matrícula ainda valia na competência: `end_date` nulo **ou**
   `date_trunc('month', end_date) >= p_competence`.
 
+**Hora/aula** — **uma** `charge` por matrícula na competência, se:
+
+- `billing_type = 'per_lesson'` e `active = true`;
+- existe pelo menos uma aula na competência (`status` ≠ `rescheduled`);
+- a competência é **>=** ao mês de `start_date` e a matrícula ainda valia nela.
+
+O faturamento é sempre mensal. Só o cálculo do valor muda: soma das aulas do
+mês × `enrollments.amount`. Baixa e recibo são iguais aos da mensalidade.
+
+**Aula avulsa em aluno mensalista** — gera uma `charge` extra (`lesson_id` da
+aula, vencimento no dia da aula, valor informado no agendamento). Não mistura
+com a mensalidade do mês. Aluno `per_lesson` não ganha linha avulsa: a aula já
+entra na soma do mês.
+
 Campos gravados na criação:
 
-| Campo         | Valor                                                                 |
-| ------------- | --------------------------------------------------------------------- |
-| `competence`  | 1º dia do mês (`date_trunc('month', ...)`)                            |
-| `due_date`    | competência com dia = `min(due_day, último dia do mês)` (ex.: 31→fev) |
-| `amount`      | **snapshot** do `enrollments.amount` no momento da geração            |
-| `status`      | `pending`                                                             |
+| Campo         | Mensalidade                                                           | Hora/aula                                                       | Avulsa (mensalista)                          |
+| ------------- | --------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------- |
+| `competence`  | 1º dia do mês                                                         | 1º dia do mês                                                   | 1º dia do mês                                |
+| `due_date`    | competência com dia = `min(due_day, último dia do mês)` (ex.: 31→fev) | `due_day` se houver; senão a data da primeira aula do mês       | data da aula                                 |
+| `amount`      | **snapshot** do `enrollments.amount`                                  | **snapshot** de `amount × aulas do mês`                         | valor informado no agendamento               |
+| `status`      | `pending`                                                             | `pending`                                                       | `pending`                                    |
+| `lesson_id`   | nulo                                                                  | nulo                                                            | id da aula                                   |
 
 `amount` é cópia, não referência: mudar o valor da matrícula depois não reescreve
-mensalidades já geradas (histórico financeiro estável). Para refletir num mês já
+cobranças já geradas (histórico financeiro estável). Para refletir num mês já
 gerado, o professor edita a cobrança (fase 2) ou dá baixa com `paid_amount`
 diferente.
 
@@ -87,11 +103,9 @@ diferente.
 
 ## 2. O que NÃO dispara geração
 
-- **Hora/aula (`per_lesson`)**: o pagamento é acompanhado aula a aula; não há
-  competência mensal fixa. No MVP essas matrículas não aparecem em
-  Mensalidades (ou aparecem só como informação; ver "Fora do MVP").
-- **Aula avulsa**: entra como aula/pagamento pontual, nunca como mensalidade
-  recorrente.
+- Aulas `rescheduled` (o horário antigo) não entram na soma do mês.
+- Meses futuros só porque o professor navegou até eles — o valor ficaria
+  congelado cedo demais.
 
 ---
 
@@ -154,9 +168,9 @@ e os passados.
 | Coluna      | Conteúdo                                              |
 | ----------- | ---------------------------------------------------- |
 | Aluno       | foto/inicial + nome (link para a ficha)              |
-| Competência | mês/ano (ex.: "nov/2026")                            |
+| Referência  | Mensalidade ou Aula + mês de competência             |
 | Vencimento  | `due_date` formatado                                 |
-| Valor       | `amount` em BRL                                      |
+| Valor       | `amount` em BRL (hora/aula: soma das aulas do mês)   |
 | Status      | badge: A vencer / Atrasado / Pago                    |
 | Ações       | menu por linha (abaixo)                              |
 
@@ -167,8 +181,8 @@ mesmos dados e ações.
 
 1. **Marcar como pago** — abre modal com: data do pagamento (default hoje),
    valor recebido (default `amount`), método (Pix, dinheiro, cartão, outro) e
-   observação. Grava `status='paid'`, `paid_at`, `paid_amount`, `method`,
-   `notes`.
+   observação. Hora/aula entra como **uma cobrança do mês** (soma das aulas).
+   Grava `status='paid'`, `paid_at`, `paid_amount`, `method`, `notes`.
 2. **Emitir recibo (PDF)** — habilitado só para `paid` (ver seção 6).
 3. **Cobrar no WhatsApp** — mensagem pronta com nome, competência, valor,
    vencimento e a chave Pix do professor (vem de Configurações; enquanto não
@@ -178,7 +192,7 @@ mesmos dados e ações.
 ### 4.5 Relatório do mês (PDF)
 
 Botão **Imprimir PDF** ao lado de Filtros. Abre
-`/mensalidades/relatorio` com o mesmo período (e os filtros atuais) em layout
+`/faturamento/relatorio` com o mesmo período (e os filtros atuais) em layout
 A4 para **Imprimir → Salvar como PDF**.
 
 O relatório é o controle do professor, não um recibo:
@@ -200,11 +214,11 @@ O relatório é o controle do professor, não um recibo:
 - (Opcional, com cron) `mark_overdue_charges()` — `update charges set
   status='overdue' where status='pending' and due_date < current_date`.
 
-### Server actions (Next, em `src/app/mensalidades/actions.ts`)
+### Server actions (Next, em `src/app/faturamento/actions.ts`)
 
-- `listCharges({ competfrom, competo, studentId, status })` — SELECT com join em
-  `enrollments → students`, ordenado por `due_date`. Chama
-  `ensure_month_charges` para a competência corrente antes de ler.
+- `listCharges({ month, studentId, status })` — SELECT com join em
+  `enrollments → students`. Uma linha por matrícula na competência. Chama
+  `ensure_month_charges` antes de ler.
 - `markChargePaid(chargeId, { paidAt, paidAmount, method, notes })`.
 - `undoChargePayment(chargeId)`.
 
@@ -213,8 +227,9 @@ por organização, mas as actions também filtram por `organization_id`.
 
 ### Página
 
-- `src/app/mensalidades/page.tsx` — server component, lê filtros de
+- `src/app/faturamento/page.tsx` — server component, lê filtros de
   `searchParams` (`?competencia=YYYY-MM&aluno=&status=`), monta resumo + tabela.
+  `/mensalidades` redireciona para cá.
 - `src/components/teacher/charges-table.tsx` — client, tabela/cards, popover de
   filtros, modais de baixa e estorno.
 
@@ -224,12 +239,12 @@ por organização, mas as actions também filtram por `organization_id`.
 
 MVP sem dependência nova de PDF:
 
-- Rota de impressão `src/app/mensalidades/[chargeId]/recibo/page.tsx` com layout
+- Rota de impressão `src/app/faturamento/[chargeId]/recibo/page.tsx` com layout
   A4 limpo e `@media print`. O professor usa **Imprimir → Salvar como PDF** do
   navegador. Só abre para cobranças `paid`.
 - Conteúdo: organização/professor, aluno, nº do recibo (ex.: `competence` +
   curto do id), competência, valor pago, data e método de pagamento, e uma
-  linha de "referente a mensalidade de <mês>".
+  linha de "referente à mensalidade de <mês>" ou "à aula de <data>".
 - Fase 2 (se virar requisito forte): gerar o PDF no servidor para anexar no
   WhatsApp/e-mail.
 
@@ -237,20 +252,16 @@ MVP sem dependência nova de PDF:
 
 ## 7. Migrações necessárias
 
-O schema de `charges` já tem o essencial (colunas, enum `charge_status`,
-`UNIQUE (enrollment_id, competence)`, RLS por organização). Falta só:
+O schema de `charges` tem colunas, enum `charge_status`, unicidade por
+`(enrollment_id, competence)` e RLS por organização. A função
+`ensure_month_charges` gera uma cobrança mensal (valor fixo ou soma das aulas).
 
-1. `create function public.ensure_month_charges(uuid, date)` (e, opcional,
-   `mark_overdue_charges`).
-2. (Opcional) habilitar `pg_cron` e agendar o job diário.
-
-Nenhuma alteração de coluna é necessária para o MVP.
+Opcional: `mark_overdue_charges` e `pg_cron` diário.
 
 ---
 
 ## 8. Fora do MVP (anotado para não esquecer)
 
-- Cobrança de **hora/aula** por aulas realizadas no mês.
 - Edição de valor/vencimento de uma cobrança já gerada.
 - Juros/multa por atraso.
 - Pix automático (cobrança e conciliação) e notificação.

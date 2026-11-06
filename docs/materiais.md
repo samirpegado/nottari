@@ -184,9 +184,9 @@ Uploads vão para um bucket privado **`materials`**, caminho
 `{organization_id}/{material_id}/{filename}`. Mesmo padrão das fotos: RLS por
 `private.is_org_member`, URL assinada na leitura.
 
-Teto por arquivo no MVP: **20 MB**. Vídeo não conta na cota (é link). A cota
-da organização (plano) aparece depois, em Configurações; na tela, se estourar,
-a action devolve erro claro.
+Teto por arquivo segue o plano: **10 MB** no Gratuito e **20 MB** no Professor.
+Vídeo não conta na cota (é link). A cota da organização aparece em
+Configurações; o tamanho por arquivo já é recusado na action se estourar.
 
 O `CHECK` atual de `materials` só admite `pdf`/`audio` com `storage_path` e
 `video_link` com `external_url`. Precisa passar a aceitar `document` no mesmo

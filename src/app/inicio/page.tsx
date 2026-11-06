@@ -10,8 +10,10 @@ import { TeacherShell } from "@/components/teacher/teacher-shell"
 import { QuickMetronome } from "@/components/teacher/quick-metronome"
 import { StatusDonut } from "@/components/teacher/status-donut"
 import { WeekCalendar, type WeekDay } from "@/components/teacher/week-calendar"
+import { addMonths, competenceDate, formatCompetenceLong } from "@/lib/charges"
 import { createClient } from "@/lib/supabase/server"
-import { ensureCurrentMonthCharges } from "@/app/mensalidades/actions"
+import { displaySchoolName } from "@/lib/teacher"
+import { ensureCurrentMonthCharges } from "@/app/faturamento/actions"
 
 export const metadata: Metadata = {
   title: "Início",
@@ -35,23 +37,28 @@ export default async function TeacherHomePage() {
 
   const { data: membership } = await supabase
     .from("members")
-    .select("display_name, organization_id, organizations(name)")
+    .select("display_name, organization_id, organizations(name, type)")
     .eq("user_id", auth.user.id)
     .limit(1)
     .maybeSingle()
 
   const organizationId = membership?.organization_id ?? null
-  const organizationName = organizationNameOf(membership?.organizations) || "Sua conta"
+  const organizationName = displaySchoolName(
+    one(membership?.organizations as { name: string; type: string } | { name: string; type: string }[] | null),
+  )
   const fullName = membership?.display_name?.trim() || nameFromEmail(auth.user.email)
   const firstName = fullName.split(" ")[0] || "Professor"
 
   const today = saoPauloYmd()
+  const month = today.slice(0, 7)
+  const competence = competenceDate(month)
+  const monthStartISO = dayStartISO(competence)
+  const monthEndISO = dayEndISO(addDaysYmd(`${addMonths(month, 1)}-01`, -1))
   const weekStart = addDaysYmd(today, -weekdayIndex(today))
-  const startISO = dayStartISO(today)
-  const endISO = dayEndISO(today)
   const weekStartISO = dayStartISO(weekStart)
   const weekEndISO = dayEndISO(addDaysYmd(weekStart, 6))
   const now = new Date().toISOString()
+  const monthLabel = formatCompetenceLong(month)
 
   if (organizationId) await ensureCurrentMonthCharges()
 
@@ -62,8 +69,8 @@ export default async function TeacherHomePage() {
             .from("lessons")
             .select("status")
             .eq("organization_id", organizationId)
-            .gte("scheduled_at", startISO)
-            .lte("scheduled_at", endISO),
+            .gte("scheduled_at", monthStartISO)
+            .lte("scheduled_at", monthEndISO),
           supabase
             .from("lessons")
             .select(
@@ -87,6 +94,7 @@ export default async function TeacherHomePage() {
             .from("charges")
             .select("amount")
             .eq("organization_id", organizationId)
+            .eq("competence", competence)
             .in("status", ["pending", "overdue"]),
         ])
       : [null, null, null, null]
@@ -126,43 +134,45 @@ export default async function TeacherHomePage() {
           Olá, {firstName}!
         </h1>
         <p className="mt-1 text-sm text-[#64748B]">
-          {organizationName} · {todayLabel()}
+          {organizationName ? `${organizationName} · ` : ""}
+          {todayLabel()}
         </p>
       </header>
 
       <section
         className="mt-6 grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4"
-        aria-label="Indicadores de hoje"
+        aria-label="Indicadores do mês"
       >
         <Stat
-          label="Aulas de hoje"
+          label="Aulas do mês"
           value={String(totalLessons)}
           icon={<CalendarDays className="size-5" />}
           tone="blue"
+          hint={monthLabel}
         />
         <Stat
           label="Concluídas"
           value={String(done)}
           icon={<CheckCircle2 className="size-5" />}
           tone="green"
-          hint={presence !== null ? `${presence}% de presença` : undefined}
+          hint={presence !== null ? `${presence}% de presença` : monthLabel}
         />
         <Stat
           label="Faltas"
           value={String(missed)}
           icon={<TriangleAlert className="size-5" />}
           tone={missed > 0 ? "red" : "muted"}
-          hint={missed > 0 ? "hoje" : "Nenhuma falta"}
+          hint={missed > 0 ? monthLabel : "Nenhuma falta"}
         />
         <Stat
-          label="Mensalidades em aberto"
+          label="Faturamento em aberto"
           value={brl(openAmount)}
           icon={<Wallet className="size-5" />}
           tone={openCount > 0 ? "amber" : "muted"}
           hint={
             openCount > 0
-              ? `${openCount} ${openCount === 1 ? "cobrança" : "cobranças"}`
-              : "Tudo em dia"
+              ? `${openCount} ${openCount === 1 ? "cobrança" : "cobranças"} · ${monthLabel}`
+              : `Tudo em dia · ${monthLabel}`
           }
         />
       </section>
@@ -172,7 +182,7 @@ export default async function TeacherHomePage() {
 
         <WeekCalendar days={weekDays} />
 
-        <StatusDonut counts={counts} periodLabel="Hoje" />
+        <StatusDonut counts={counts} periodLabel={monthLabel} />
 
         <section
           aria-label="Próximas aulas"
@@ -304,11 +314,6 @@ function studentName(
 ) {
   if (!student) return "Aluno"
   return student.stage_name?.trim() || student.full_name?.trim() || "Aluno"
-}
-
-function organizationNameOf(value: unknown) {
-  const row = one(value as { name: string } | { name: string }[] | null)
-  return row?.name ?? ""
 }
 
 function one<T>(value: T | T[] | null | undefined): T | null {

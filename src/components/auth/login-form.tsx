@@ -16,14 +16,14 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatBrPhone, isEmail } from "@/lib/auth-fields"
 import { cn } from "@/lib/utils"
-import { signInProfessor } from "@/app/auth/actions"
+import { signInProfessor, signInStudent } from "@/app/auth/actions"
 
 type Role = "professor" | "aluno"
 
 const fieldClassName = "h-11"
 
-export function LoginForm() {
-  const [role, setRole] = useState<Role>("professor")
+export function LoginForm({ studentFirst = false }: { studentFirst?: boolean }) {
+  const [role, setRole] = useState<Role>(studentFirst ? "aluno" : "professor")
 
   return (
     <Card className="bg-card/90 shadow-[0_24px_80px_-36px_rgba(59,130,246,0.55)] ring-foreground/10 backdrop-blur-md">
@@ -180,6 +180,8 @@ function StudentForm() {
   const [phone, setPhone] = useState("")
   const [pin, setPin] = useState("")
   const [submitted, setSubmitted] = useState(false)
+  const [pending, setPending] = useState(false)
+  const [formError, setFormError] = useState<string>()
   const digits = phone.replace(/\D/g, "")
 
   const phoneError =
@@ -190,10 +192,16 @@ function StudentForm() {
         : undefined
   const pinError = pin.length === 4 ? undefined : "O PIN tem 4 dígitos."
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSubmitted(true)
+    setFormError(undefined)
     if (phoneError || pinError) return
+
+    setPending(true)
+    const result = await signInStudent(phone, pin)
+    setPending(false)
+    if (result && !result.ok) setFormError(result.error)
   }
 
   return (
@@ -222,8 +230,13 @@ function StudentForm() {
         />
         <FieldError message={submitted ? pinError : undefined} />
       </div>
-      <Button type="submit" className="mt-1 w-full">
-        Entrar
+      {formError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {formError}
+        </p>
+      ) : null}
+      <Button type="submit" className="mt-1 w-full" disabled={pending}>
+        {pending ? "Entrando..." : "Entrar"}
       </Button>
     </form>
   )

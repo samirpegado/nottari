@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: "Nottari",
     template: "%s · Nottari",
   },
-  description: "Plataforma de gestão musical para professores e escolas.",
+  description: "Plataforma de gestão musical para o professor solo ou a escola com um professor.",
 };
 
 export default function RootLayout({

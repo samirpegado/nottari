@@ -16,9 +16,9 @@ const navigation = [
   { label: "Início", href: "/inicio", icon: House },
   { label: "Alunos", href: "/alunos", icon: Users },
   { label: "Agenda", href: "/agenda", icon: CalendarDays },
-  { label: "Mensalidades", href: "/mensalidades", icon: Wallet },
+  { label: "Faturamento", href: "/faturamento", icon: Wallet },
   { label: "Materiais", href: "/materiais", icon: Library },
-  { label: "Configurações", icon: Settings },
+  { label: "Configurações", href: "/configuracoes", icon: Settings },
 ]
 
 export function TeacherNav({

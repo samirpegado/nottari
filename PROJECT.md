@@ -4,11 +4,11 @@ Oct 16, 2026 · @Samir
 
 ## Visão geral
 
-O produto é um app web e mobile (PWA) para professores e escolas de música controlarem alunos, agenda, mensalidades e progresso. Quem paga a plataforma é o professor ou a escola; o aluno acessa de graça e só visualiza.
+O produto é um app web e mobile (PWA) para professores de música controlarem alunos, agenda, mensalidades e progresso. Quem paga a plataforma é o professor; o aluno acessa de graça e só visualiza.
 
-- **Usuário principal:** professor autônomo ou escola de música.
+- **Usuário principal do MVP:** professor solo, ou escola com **um** professor. Uma conta, uma agenda, os próprios alunos.
 - **Aluno:** área de acesso por telefone + PIN de 4 dígitos, sem conta/senha tradicional, com agenda, tarefa atual, materiais, linha do tempo e metrônomo.
-- **Ordem de lançamento:** professor solo primeiro; escola com vários professores na fase 2.
+- **Fora do MVP:** escola com vários professores, papéis e vínculo professor–aluno. Isso entra só depois, se o núcleo solo se provar.
 
 ## Dores que motivam o produto
 
@@ -50,13 +50,13 @@ O app registra vencimento, status (pendente, pago, atrasado) e baixa manual pelo
 
 Cobrança automática via Pix (Asaas, Mercado Pago e similares) fica para a fase 3.
 
-### 5. Um modelo só para escola e professor solo
+### 5. Organização com um único professor
 
-Modele desde o início uma `Organização`. O professor solo é uma organização com um único membro. Assim a versão para escolas, com vários professores, vínculo professor-aluno e permissões, entra na fase 2 sem reescrever o banco.
+Modele desde o início uma `Organização`, mesmo no solo: o professor (ou a escola de um professor) é uma organização com um único membro. O tipo `solo` ou `school` só muda o nome, a logo e o contato nos recibos — não abre equipe. Escola com vários professores fica de fora do MVP de propósito: papéis, convites e vínculo professor–aluno aumentam o produto sem ajudar a validar a aula.
 
 ## Plano por fases
 
-O caminho tem quatro etapas: validar antes de programar, lançar um MVP enxuto para professor solo, abrir para escolas e só então automatizar cobrança.
+O caminho tem quatro etapas: validar antes de programar, lançar um MVP enxuto para professor/escola solo, cobrar a plataforma via Asaas e só então, se fizer sentido, abrir para escolas com vários professores.
 
 ### Fase 0: validação (enxuta, pela própria experiência)
 
@@ -77,12 +77,12 @@ A validação parte da vivência do fundador, que faz e dá aulas de bateria e s
 7. Controle de mensalidades com baixa manual e botão de WhatsApp pronto.
 8. Área do aluno por telefone + PIN de 4 dígitos: agenda, tarefa atual, materiais, linha do tempo e metrônomo.
 
-### Fase 2: crescimento
+### Fase 2: crescimento (ainda no solo)
 
-- Escolas: vários professores, papéis e vínculo professor-aluno, com visão do dono.
 - E-mail automático de vencimento.
 - Relatórios simples: frequência, inadimplência e evolução do aluno.
 - Avaliação do aluno por competência e metas.
+- Escola com vários professores **não entra aqui**. Só depois do MVP solo estar validado.
 
 ### Fase 3: monetização avançada
 
@@ -106,12 +106,12 @@ App nativo só entra quando houver tração. Se você já tem uma stack de prefe
 
 ## Modelo de dados
 
-Tudo pertence a uma `Organization`, o que permite escola e professor solo no mesmo esquema.
+Tudo pertence a uma `Organization`. No MVP ela tem um único membro: o professor dono.
 
 | Entidade | Para que serve | Liga com |
 | --- | --- | --- |
-| `Organization` | Escola ou professor solo | Raiz de tudo |
-| `Member` | Professor, com papel | `Organization` |
+| `Organization` | Conta do professor ou da escola solo | Raiz de tudo |
+| `Member` | O professor dono (um por organização no MVP) | `Organization` |
 | `Student` | Cadastro do aluno, inclui telefone e PIN de acesso | `Organization`, `StudentAccess` |
 | `StudentAccess` | PIN de 4 dígitos (cifrado), sessões e controle de tentativas do aluno | `Student` |
 | `Enrollment` | Plano, valores e dia de vencimento | `Student` |
@@ -124,7 +124,16 @@ Tudo pertence a uma `Organization`, o que permite escola e professor solo no mes
 
 ## Preço
 
-O aluno é sempre gratuito. O professor tem plano gratuito até uns 5 a 8 alunos e plano pago acima disso, com cota maior de armazenamento. O limite de armazenamento é o que protege o custo, porque arquivos e tráfego pesam mais que texto no banco.
+O aluno é sempre gratuito. Quem paga é o professor (ou a escola solo), via Asaas.
+
+| Plano | Alunos ativos | Armazenamento | Por arquivo | Preço |
+| --- | --- | --- | --- | --- |
+| Gratuito | 5 | 50 MB | 10 MB | R$ 0 |
+| Professor | 50 | 1 GB | 20 MB | R$ 29,90/mês ou R$ 299/ano |
+
+Dois planos no lançamento. Um segundo plano pago só entra se alguém bater no teto
+do Professor. Os limites de aluno e cota ainda não bloqueiam o uso; o tamanho
+por arquivo já segue o plano atual.
 
 ## Riscos e próximos passos
 

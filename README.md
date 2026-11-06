@@ -1,8 +1,8 @@
 # Nottari
 
-**SaaS para professores e escolas de música** controlarem alunos, agenda, mensalidades e progresso — com metrônomo embutido e área do aluno sem senha tradicional.
+**SaaS para o professor de música** (ou a escola com um professor) controlar alunos, agenda, mensalidades e progresso — com metrônomo embutido e área do aluno sem senha tradicional.
 
-Quem paga é o professor ou a escola. O aluno acessa de graça, pelo telefone + PIN, e só visualiza.
+Quem paga é o professor. O aluno acessa de graça, pelo telefone + PIN, e só visualiza. Escola com vários professores fica fora do MVP.
 
 ## O problema
 
@@ -14,7 +14,7 @@ O produto nasce de dores reais sentidas em aulas de bateria, não de pesquisa te
 
 ## Como funciona
 
-- **Professor/escola:** cadastra alunos, matrículas, agenda semanal, registra o que foi feito em cada aula (peça, BPM, tarefa), organiza materiais e controla mensalidades.
+- **Professor (MVP):** uma conta, um professor. Cadastra alunos, matrículas, agenda semanal, registra o que foi feito em cada aula (peça, BPM, tarefa), organiza materiais e controla mensalidades. Pode apresentar os recibos no próprio nome ou no nome da escola.
 - **Aluno:** entra na área dele por **telefone + PIN de 4 dígitos** (sem conta nem senha) e visualiza agenda, tarefa atual, materiais, linha do tempo e metrônomo.
 - **Metrônomo:** roda no navegador via Web Audio API, sem custo de servidor e sem anúncios.
 - **Cobrança (MVP):** só controle (vencimento, status, baixa manual) com botão de WhatsApp e chave Pix prontos — sem processar pagamento.
@@ -34,7 +34,7 @@ O produto nasce de dores reais sentidas em aulas de bateria, não de pesquisa te
 | Arquivos pesados | Cloudflare R2 | Não cobra tráfego de saída |
 | E-mail | Resend ou SES | Custo quase nulo no volume inicial |
 
-Tudo pertence a uma `Organization`, o que permite escola e professor solo no mesmo esquema (o solo é uma organização com um único membro).
+Tudo pertence a uma `Organization` com um único membro no MVP. O tipo `solo` ou `school` só muda nome, logo e contato nos recibos.
 
 ## Modelo de dados
 
@@ -42,7 +42,7 @@ O schema já está aplicado no Supabase. Principais tabelas (todas com RLS por o
 
 | Tabela | Para que serve |
 | --- | --- |
-| `organizations` | Escola ou professor solo (raiz de tudo) |
+| `organizations` | Conta do professor ou da escola solo (raiz de tudo) |
 | `members` | Professor/dono, vinculado ao usuário de login |
 | `students` | Cadastro do aluno, telefone, PIN (cifrado) e foto opcional |
 | `student_sessions` | Sessões por dispositivo após o login do aluno |
@@ -55,7 +55,7 @@ O schema já está aplicado no Supabase. Principais tabelas (todas com RLS por o
 | `material_assignments` | Material atribuído a um aluno |
 | `charges` | Mensalidade com competência, vencimento e status |
 
-Buckets privados no Storage: `student-photos` (JPG) e `materials` (PDF, Word, MP3, até 20 MB). Vídeo da biblioteca é só URL, sem arquivo.
+Buckets privados no Storage: `student-photos` (JPG), `materials` (PDF, Word, MP3; teto por arquivo conforme o plano, até 20 MB no Professor) e `org-branding` (logo). Vídeo da biblioteca é só URL, sem arquivo.
 
 ### RPCs principais
 
@@ -68,8 +68,9 @@ Buckets privados no Storage: `student-photos` (JPG) e `materials` (PDF, Word, MP
 
 ## Roadmap
 
-- **Fase 1 (MVP):** cadastro, matrícula, agenda com remarcação, registro de aula, materiais, mensalidade manual e área do aluno por telefone + PIN.
-- **Fase 2:** escolas com vários professores, e-mail automático de vencimento e relatórios simples.
+- **Fase 1 (MVP):** professor/escola solo (um professor), cadastro, matrícula, agenda, registro de aula, materiais, mensalidade manual e área do aluno por telefone + PIN.
+- **Fase 2:** e-mail de vencimento e relatórios simples, ainda no solo.
+- **Depois do MVP validado:** escola com vários professores, se fizer sentido.
 - **Fase 3:** cobrança automática via Pix, aluno registrando o próprio estudo e notificações push.
 
 Visão completa, decisões e riscos em [`PROJECT.md`](PROJECT.md). O esboço das
@@ -78,7 +79,7 @@ telas, o conteúdo de cada uma e a ordem dos menus estão em
 
 ## Preço
 
-O aluno é sempre gratuito. O professor tem plano gratuito até uns 5 a 8 alunos e plano pago acima disso, com cota maior de armazenamento — o limite de storage é o que protege o custo.
+O aluno é sempre gratuito. Dois planos no lançamento: **Gratuito** (5 alunos, 50 MB, 10 MB por arquivo) e **Professor** (50 alunos, 1 GB, 20 MB por arquivo, R$ 29,90/mês ou R$ 299/ano). Cobrança via Asaas entra depois; cota e alunos ainda não bloqueiam o uso.
 
 ## Desenvolvimento
 

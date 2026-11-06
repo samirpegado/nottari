@@ -79,7 +79,7 @@ export function SignupForm() {
     <Card className="bg-card/90 shadow-[0_24px_80px_-36px_rgba(59,130,246,0.55)] ring-foreground/10 backdrop-blur-md">
       <CardHeader>
         <CardTitle className="text-lg">Criar conta</CardTitle>
-        <CardDescription>Para professores e escolas.</CardDescription>
+        <CardDescription>Para o professor ou a escola com um professor.</CardDescription>
       </CardHeader>
       <CardContent>
         {done ? (
@@ -158,6 +158,7 @@ export function SignupForm() {
             id="signup-school"
             label="Nome da escola"
             optional
+            hint="Se preencher, os recibos saem no nome da escola. A conta continua sendo só sua."
             autoComplete="organization"
             value={schoolName}
             onChange={setSchoolName}
@@ -190,6 +191,7 @@ function Field({
   id,
   label,
   optional = false,
+  hint,
   error,
   onChange,
   value,
@@ -198,6 +200,7 @@ function Field({
   id: string
   label: string
   optional?: boolean
+  hint?: string
   error?: string
   value: string
   onChange: (value: string) => void
@@ -222,6 +225,8 @@ function Field({
         <p className="text-xs text-destructive" role="alert">
           {error}
         </p>
+      ) : hint ? (
+        <p className="text-xs text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   )
