@@ -20,10 +20,10 @@ que foi feito → cobrar quando vence. Os menos usados ficam embaixo.
 | # | Menu | Por quê nessa posição | Status |
 | --- | --- | --- | --- |
 | 1 | **Início** | Tela de pouso após login; resumo do dia | feito |
-| 2 | **Alunos** | O horário só existe se o aluno já estiver cadastrado | feito (cadastro e lista) |
+| 2 | **Alunos** | O horário só existe se o aluno já estiver cadastrado | feito (lista, cadastro e board) |
 | 3 | **Agenda** | Semana com horários livres e ocupados | feito |
-| 4 | **Mensalidades** | Controle financeiro, uso semanal/mensal | a fazer |
-| 5 | **Materiais** | Biblioteca; consultado com menos frequência | a fazer |
+| 4 | **Mensalidades** | Controle financeiro, uso semanal/mensal | feito |
+| 5 | **Materiais** | Biblioteca; consultado com menos frequência | feito |
 | 6 | **Configurações** | Conta, plano, dados da organização | a fazer |
 
 A ordem atual do menu já segue isso. Dois ajustes recomendados:
@@ -31,8 +31,8 @@ A ordem atual do menu já segue isso. Dois ajustes recomendados:
 - **Metrônomo** não entra como item de menu de navegação. Ele é usado no meio da
   aula, então fica como **ação rápida sempre visível** (botão fixo no topo/rodapé)
   e embutido dentro da tela da aula. Uma rota própria `/metronomo` é opcional.
-- No celular, os 4 primeiros (Início, Alunos, Agenda, Mensalidades) viram uma
-  **tab bar inferior**; Materiais e Configurações entram num menu "Mais".
+- No celular, o menu vira um botão no canto esquerdo. Ele abre o mesmo painel
+  lateral como gaveta, com um botão para fechar.
 
 ---
 
@@ -77,11 +77,14 @@ coluna da esquerda e os dias de segunda a domingo. Um bloco azul é um horário
 fixo (`schedule_rules`). O restante é horário disponível.
 
 Para ocupar um horário, o aluno **já precisa existir** em Alunos. O botão
-**Matricular** (ou um clique na célula livre) define o dia, a duração, o
-horário, o valor (hora/aula ou mensalidade), o dia do pagamento e detalhes. Um dia que já passou
+**Matricular** (ou um clique na célula livre) busca o aluno por nome, telefone
+ou CPF (sem carregar a lista inteira) e define o dia, a duração, o
+horário, o valor (hora/aula ou mensalidade), o dia do pagamento e detalhes.
+Marcar **aula avulsa** agenda só aquela data, some a mensalidade e fica o
+valor da hora/aula. Um dia que já passou
 nesta semana marca a primeira aula na próxima e o horário já aparece na coluna desse dia. Isso cria a matrícula, a regra
-semanal e as próximas 8 aulas. Um clique no horário ocupado abre a matrícula
-para edição. O encerramento fica na ficha do aluno.
+semanal e as próximas 8 aulas. Um clique no horário ocupado abre a ficha do
+aluno. Editar e encerrar a matrícula ficam nessa ficha.
 
 Estado vazio: sem alunos, a agenda pede o cadastro antes de reservar.
 
@@ -91,33 +94,47 @@ Estado vazio: sem alunos, a agenda pede o cadastro antes de reservar.
 
 ### 3a. Lista de alunos
 
-Tabela paginada, 20 por página, com busca por nome, CPF, telefone ou e-mail.
-Colunas: nome, telefone, CPF, e-mail e ações. **Editar** reabre o modal com os
-dados e o PIN atuais. **Excluir** remove o aluno, os horários e as aulas.
+Cards paginados, 20 por página, com busca por nome, CPF, telefone ou e-mail.
+Cada card mostra foto (ou iniciais), nome, CPF, instrumento, nível, próxima aula,
+mensalidade, telefone, e-mail, WhatsApp e ações. **Editar** abre o modal de
+cadastro sobre a página. **Excluir** pede confirmação num modal antes de
+remover o aluno, os horários e as aulas.
 
 ### 3b. Cadastro do aluno
 
-Modal. Obrigatórios: nome e telefone. Opcionais: e-mail, CPF e endereço.
-O PIN de 4 dígitos já vem preenchido e pode ser alterado antes de salvar.
+Modal. Obrigatórios: nome e telefone. Opcionais: foto, cor do card, e-mail, CPF,
+instrumento, nível (iniciante, intermediário ou avançado) e endereço. A cor
+padrão é o azul da marca; o professor pode escolher outra. A foto é comprimida
+para no máximo 256×256 e 60% de qualidade (JPEG) antes de ir ao Storage. O
+instrumento sai de
+uma lista e também pode ser digitado.
+O mesmo CPF pode aparecer em mais de um cadastro, para o aluno estudar outro
+instrumento. O PIN de 4 dígitos já vem preenchido e pode ser alterado antes de
+salvar; se o telefone for o mesmo de outro cadastro, o PIN precisa ser outro.
 No endereço, o CEP consulta o ViaCEP e preenche logradouro, bairro, cidade e UF.
 
 Dados: `students` (CPF e endereço estruturado) e PIN via `create_student`.
 
-### 3c. Detalhe do aluno
+### 3c. Detalhe do aluno — o board da aula
 
-A tela mais importante do produto. Ordem:
+A tela mais importante do produto. Não é uma ficha cadastral: é o **board que o
+professor abre durante a aula**. Ordem:
 
 1. Cabeçalho: nome + ações (**Registrar aula**, **WhatsApp**, editar).
-2. **Onde parou** em destaque no topo: última `lesson_note` (peça, BPM, compasso,
-   tarefa) — resolve a dor de lembrar a aula anterior.
-3. **Próxima aula** e matrícula resumida. **Encerrar matrícula** fica aqui:
-   último dia no calendário e motivo. As aulas depois dessa data saem da agenda.
-4. **Linha do tempo**: histórico de aulas e registros, do mais recente ao antigo.
-5. **Materiais do aluno**: atribuídos, com atalho para atribuir mais.
-6. **Mensalidades** do aluno: status e botão de cobrança.
-7. Acesso do aluno: telefone + PIN, botão "Enviar link/PIN por WhatsApp".
+2. **Onde paramos** em destaque no topo: última `lesson_note` (peça/método, onde
+   parou, BPM, tarefa) — resolve a dor de lembrar a aula anterior.
+3. **Prontuário / linha do tempo**: cada aula vira uma entrada datada, com
+   compositor de observação que pré-preenche peça/BPM da última aula.
+4. **Metrônomo** embutido (reusa `QuickMetronome`), já no BPM da última aula.
+5. **Materiais do aluno**: acesso rápido aos compartilhados (abrir/compartilhar).
+6. **Matrícula** resumida (editar/encerrar), **mensalidades** e **acesso**
+   (telefone + PIN).
 
-Dados: `lesson_notes`, `lessons`, `material_assignments`, `charges`, `student_access`.
+Dados: `lessons`, `lesson_notes`, `enrollments`/`schedule_rules`,
+`material_assignments`/`materials`, `charges`. Tudo sobre o schema atual.
+
+Especificação completa (layout, prontuário, actions) em
+[`docs/aluno.md`](aluno.md).
 
 ---
 
@@ -144,16 +161,23 @@ Dados: `lessons` (status) + `lesson_notes` (peça, bpm, measure, homework, notes
 
 **Objetivo:** ver quem deve e cobrar em um toque.
 
-Ordem dos elementos:
+Datatable com o **mês corrente** por padrão. Ordem dos elementos:
 
 1. Cabeçalho + resumo: **em aberto**, **vencendo**, **recebido no mês**.
-2. Filtro por status (pendente/pago/atrasado) e por competência (mês).
+2. Botão **Filtros**: período (default mês corrente), aluno (busca ajax,
+   default todos) e status (default todos). Botão **Imprimir PDF** do mês
+   (resumo + em aberto + pagos).
 3. Lista: aluno, competência, vencimento, valor, status.
-4. Ações por linha: **dar baixa** (pago) e **cobrar no WhatsApp** (mensagem
-   pronta com a chave Pix do professor).
+4. Ações por linha: **marcar como pago**, **emitir recibo em PDF**, **cobrar no
+   WhatsApp** e **estornar**.
 
-Dados: `charges` (`competence`, `due_date`, `amount`, `status`, `paid_at`).
-Sem processar pagamento no MVP: baixa é manual.
+A cobrança do mês nasce no começo da competência com status **A vencer** e vira
+**Atrasado** depois do vencimento sem baixa. Dados: `charges` (`competence`,
+`due_date`, `amount`, `status`, `paid_at`). Sem processar pagamento no MVP:
+baixa é manual.
+
+Especificação completa (geração, status, ações, recibo, migrações) em
+[`docs/mensalidades.md`](mensalidades.md).
 
 ---
 
@@ -161,16 +185,26 @@ Sem processar pagamento no MVP: baixa é manual.
 
 **Objetivo:** biblioteca do professor, reusável entre alunos.
 
+Mock de referência: `Materiais-html/Materiais.dc.html`.
+
 Ordem dos elementos:
 
-1. Cabeçalho "Materiais" + botão **Adicionar** (PDF, áudio ou link de vídeo).
-2. Busca + filtro por tipo.
-3. Lista/grade: título, tipo, tamanho, a quantos alunos está atribuído.
-4. Detalhe do material: pré-visualização e **atribuir a aluno(s)**.
-5. Indicador de cota de armazenamento do plano.
+1. Cabeçalho **Sua biblioteca** + **Nova pasta**, **Adicionar link** e
+   **Enviar arquivo**.
+2. Coluna esquerda: árvore de pastas (com subpastas e contagem de arquivos) e
+   filtro por tipo (PDF, Word, Áudio/MP3, Vídeos/links).
+3. Área principal: breadcrumb, busca, grade/lista; **pastas em cards** e
+   **arquivos em lista** (tipo colorido, tamanho ou domínio do vídeo, avatares
+   de quem tem acesso, data).
+4. Faixa para arrastar PDF, Word e MP3. Vídeo só por link.
+5. Compartilhar escolhe alunos reais (busca ajax); a área do aluno só vê o que
+   foi atribuído.
 
-Dados: `materials` (`type`, `title`, `storage_path`/`external_url`, `size_bytes`),
-`material_assignments`. Vídeo é link (sem anúncio dentro do app); PDF/áudio no storage.
+Dados: `material_folders`, `materials`, `material_assignments`. Vídeo é URL;
+PDF/Word/MP3 no bucket privado `materials`.
+
+Especificação completa (árvore, tipos, compartilhamento, migrações) em
+[`docs/materiais.md`](materiais.md).
 
 ---
 
@@ -219,9 +253,9 @@ Somente leitura no MVP. Dados vêm de `student_home` e afins.
 
 ## Resumo da ordem de construção sugerida
 
-1. Início (feito) → 2. Alunos (lista + cadastro com PIN) → 3. Registro de aula +
-metrônomo → 4. Agenda → 5. Mensalidades → 6. Materiais → 7. Área do aluno →
-8. Configurações.
+1. Início (feito) → 2. Alunos (lista + cadastro + board da aula) → 3. Registro
+de aula + metrônomo (no board do aluno) → 4. Agenda → 5. Mensalidades (feito) →
+6. Materiais (feito) → 7. Área do aluno → 8. Configurações.
 
 Essa ordem entrega primeiro o núcleo das dores (registrar aula, onde parou,
 metrônomo) antes das partes mais pesadas de agenda e cobrança.

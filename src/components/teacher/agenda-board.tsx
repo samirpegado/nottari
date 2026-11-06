@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
-import { EnrollDialog, type EnrollmentEdit } from "@/components/teacher/enroll-dialog"
-import type { EnrollmentDefaults } from "@/components/teacher/enroll-dialog"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { EnrollDialog } from "@/components/teacher/enroll-dialog"
 import {
   DAY_END,
   DAY_START,
@@ -17,20 +17,13 @@ import {
 
 const SLOT_PX = 36
 
-export type AgendaStudent = { id: string; name: string }
-
 export type AgendaBlock = {
   id: string
-  enrollmentId: string
   studentId: string
   weekday: number
   startMinutes: number
   durationMinutes: number
   student: string
-  billingType: "per_lesson" | "monthly"
-  amount: number
-  dueDay: number | null
-  notes: string
 }
 
 export type AgendaDay = {
@@ -43,8 +36,7 @@ export type AgendaDay = {
 export function AgendaBoard({
   days,
   blocks,
-  students,
-  enrollments,
+  hasStudents,
   weekLabel,
   prevWeek,
   nextWeek,
@@ -54,8 +46,7 @@ export function AgendaBoard({
 }: {
   days: AgendaDay[]
   blocks: AgendaBlock[]
-  students: AgendaStudent[]
-  enrollments: EnrollmentDefaults[]
+  hasStudents: boolean
   weekLabel: string
   prevWeek: string
   nextWeek: string
@@ -97,62 +88,41 @@ export function AgendaBoard({
     })
   }
 
-  function openEnrollment(block: AgendaBlock) {
-    if (!block.enrollmentId) return
-    setDraft({
-      weekday: block.weekday,
-      startMinutes: block.startMinutes,
-      duration: block.durationMinutes,
-      editing: {
-        ruleId: block.id,
-        enrollmentId: block.enrollmentId,
-        studentId: block.studentId,
-        billingType: block.billingType,
-        amount: block.amount,
-        dueDay: block.dueDay,
-        notes: block.notes,
-      },
-    })
-  }
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button
+          type="button"
+          onClick={openBlank}
+          disabled={!hasStudents}
+          className="w-full sm:order-2 sm:w-auto"
+        >
+          <Plus data-icon="inline-start" />
+          Matricular
+        </Button>
+        <div className="flex flex-wrap items-center gap-2 sm:order-1">
           <Link
             href={`/agenda?semana=${prevWeek}`}
             aria-label="Semana anterior"
-            className="flex size-9 items-center justify-center rounded-lg border border-[#0B1220]/10 bg-white"
+            className={buttonVariants({ variant: "outline", size: "icon" })}
           >
-            <ChevronLeft className="size-4" />
+            <ChevronLeft />
           </Link>
           <p className="min-w-36 text-center text-sm font-semibold capitalize">{weekLabel}</p>
           <Link
             href={`/agenda?semana=${nextWeek}`}
             aria-label="Próxima semana"
-            className="flex size-9 items-center justify-center rounded-lg border border-[#0B1220]/10 bg-white"
+            className={buttonVariants({ variant: "outline", size: "icon" })}
           >
-            <ChevronRight className="size-4" />
+            <ChevronRight />
           </Link>
-          <Link
-            href="/agenda"
-            className="rounded-lg border border-[#0B1220]/10 bg-white px-3 py-2 text-sm font-medium"
-          >
+          <Link href="/agenda" className={buttonVariants({ variant: "outline" })}>
             Hoje
           </Link>
         </div>
-        <button
-          type="button"
-          onClick={openBlank}
-          disabled={students.length === 0}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#3B82F6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#3B82F6]/90 disabled:opacity-50"
-        >
-          <Plus className="size-4" />
-          Matricular
-        </button>
       </div>
 
-      {students.length === 0 ? (
+      {!hasStudents ? (
         <p className="rounded-2xl bg-white px-5 py-4 text-sm text-[#64748B] shadow-sm ring-1 ring-[#0B1220]/5">
           Nenhum aluno cadastrado.{" "}
           <Link href="/alunos" className="font-semibold text-[#3B82F6]">
@@ -172,9 +142,10 @@ export function AgendaBoard({
         </span>
       </div>
 
+      <div className="overflow-hidden rounded-2xl bg-white pb-3 shadow-sm ring-1 ring-[#0B1220]/5">
       <div
         ref={scrollerRef}
-        className="overflow-auto rounded-2xl bg-white shadow-sm ring-1 ring-[#0B1220]/5"
+        className="overflow-auto"
       >
         <div className="flex min-w-[860px]">
           <div className="sticky left-0 z-20 w-16 shrink-0 border-r border-[#0B1220]/5 bg-white">
@@ -239,7 +210,7 @@ export function AgendaBoard({
                       block.weekday === day.weekday &&
                       overlaps(minute, SLOT_MINUTES, block.startMinutes, block.durationMinutes),
                   )
-                  const canOpen = !covered && students.length > 0
+                  const canOpen = !covered && hasStudents
                   return (
                     <button
                       key={minute}
@@ -266,10 +237,9 @@ export function AgendaBoard({
                 {blocks
                   .filter((block) => block.weekday === day.weekday)
                   .map((block) => (
-                    <button
+                    <Link
                       key={block.id}
-                      type="button"
-                      onClick={() => openEnrollment(block)}
+                      href={`/alunos/${block.studentId}`}
                       className="absolute inset-x-1 z-10 flex flex-col overflow-hidden rounded-lg bg-[#3B82F6] px-2 py-1 text-left text-white shadow-sm hover:bg-[#2563EB]"
                       style={{
                         top:
@@ -281,12 +251,13 @@ export function AgendaBoard({
                       <span className="text-[11px] text-white/80">
                         {formatMinutes(block.startMinutes)} · {block.durationMinutes} min
                       </span>
-                    </button>
+                    </Link>
                   ))}
               </div>
             ))}
           </div>
         </div>
+      </div>
       </div>
 
       {draft ? (
@@ -294,12 +265,9 @@ export function AgendaBoard({
           weekday={draft.weekday}
           startMinutes={draft.startMinutes}
           duration={draft.duration}
-          students={students}
           blocks={blocks}
-          enrollments={enrollments}
           todayYmd={todayYmd}
           nowMinutes={nowMinutes}
-          editing={draft.editing}
           onClose={() => setDraft(null)}
         />
       ) : null}
@@ -311,7 +279,6 @@ type Draft = {
   weekday: number
   startMinutes: number
   duration: number
-  editing?: EnrollmentEdit
 }
 
 function firstOpening(

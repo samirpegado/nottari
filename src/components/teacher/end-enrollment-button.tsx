@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { endEnrollment } from "@/app/alunos/actions"
+import { Button } from "@/components/ui/button"
 import { COLUMN_WEEKDAYS, formatLongDate } from "@/lib/schedule"
 
 const WEEKDAY_LETTER = ["D", "S", "T", "Q", "Q", "S", "S"]
@@ -44,16 +45,16 @@ export function EndEnrollmentButton({
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="destructive"
         onClick={() => {
           setError(undefined)
           setOpen(true)
         }}
-        className="rounded-xl bg-[#DC2626] px-4 py-2.5 text-sm font-semibold text-white"
       >
         Encerrar matrícula
-      </button>
+      </Button>
       {open ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#0B1220]/50 p-4 sm:items-center">
           <form
@@ -88,20 +89,12 @@ export function EndEnrollmentButton({
               {error ? <p className="mt-3 text-sm text-[#B91C1C]">{error}</p> : null}
             </div>
             <div className="flex justify-end gap-2 border-t border-[#0B1220]/8 px-5 py-4">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-[#64748B]"
-              >
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Voltar
-              </button>
-              <button
-                type="submit"
-                disabled={pending}
-                className="rounded-xl bg-[#DC2626] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-              >
+              </Button>
+              <Button type="submit" variant="destructive" disabled={pending}>
                 {pending ? "Encerrando..." : "Encerrar matrícula"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

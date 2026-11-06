@@ -87,7 +87,7 @@ export function SignupForm() {
             <p className="text-sm text-foreground">
               Conta criada. Entre com o e-mail e a senha que você acabou de definir.
             </p>
-            <Link href="/" className={buttonVariants({ className: "h-11 w-full font-semibold" })}>
+            <Link href="/" className={buttonVariants({ className: "w-full" })}>
               Entrar
             </Link>
           </div>
@@ -167,7 +167,7 @@ export function SignupForm() {
               {formError}
             </p>
           ) : null}
-          <Button type="submit" className="mt-1 h-11 w-full font-semibold" disabled={pending}>
+          <Button type="submit" className="mt-1 w-full" disabled={pending}>
             {pending ? "Criando conta..." : "Cadastre-se"}
           </Button>
           <p className="text-center text-sm text-muted-foreground">

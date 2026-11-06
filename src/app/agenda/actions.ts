@@ -20,6 +20,82 @@ import { getTeacherContext } from "@/lib/teacher"
 
 const durations: readonly number[] = DURATIONS
 
+export type StudentSearchHit = {
+  id: string
+  name: string
+  instrument: string | null
+}
+
+export async function searchStudents(query: string) {
+  const { supabase, organizationId } = await getTeacherContext()
+  if (!organizationId) return { ok: true as const, students: [] as StudentSearchHit[] }
+
+  const term = query.replace(/[%_,()\\]/g, "").trim()
+  if (!term) return { ok: true as const, students: [] as StudentSearchHit[] }
+
+  let request = supabase
+    .from("students")
+    .select("id, full_name, stage_name, instrument, phone, cpf")
+    .eq("organization_id", organizationId)
+    .eq("active", true)
+
+  const digits = term.replace(/\D/g, "")
+  const clauses = [`full_name.ilike.%${term}%`]
+  if (digits.length >= 3) {
+    clauses.push(`phone.ilike.%${digits}%`, `cpf.ilike.%${digits}%`)
+  }
+  request = request.or(clauses.join(","))
+
+  const { data } = await request.order("full_name", { ascending: true }).limit(8)
+  return {
+    ok: true as const,
+    students: (data ?? []).map((row) => ({
+      id: row.id as string,
+      name: (row.stage_name as string | null)?.trim() || (row.full_name as string),
+      instrument: (row.instrument as string | null) ?? null,
+    })),
+  }
+}
+
+export async function enrollmentPlanFor(studentId: string) {
+  const { supabase, organizationId } = await getTeacherContext()
+  if (!organizationId) {
+    return { ok: false as const, error: "Sua conta ainda não tem uma organização." }
+  }
+
+  const { data } = await supabase
+    .from("enrollments")
+    .select("billing_type, amount, due_day, notes")
+    .eq("organization_id", organizationId)
+    .eq("student_id", studentId)
+    .eq("active", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!data) {
+    return {
+      ok: true as const,
+      plan: {
+        billingType: "per_lesson" as const,
+        amount: 0,
+        dueDay: null as number | null,
+        notes: "",
+      },
+    }
+  }
+
+  return {
+    ok: true as const,
+    plan: {
+      billingType: data.billing_type === "monthly" ? ("monthly" as const) : ("per_lesson" as const),
+      amount: Number(data.amount ?? 0),
+      dueDay: typeof data.due_day === "number" ? data.due_day : null,
+      notes: (data.notes as string | null) ?? "",
+    },
+  }
+}
+
 export async function assignSlot(input: {
   studentId: string
   weekday: number
@@ -29,11 +105,13 @@ export async function assignSlot(input: {
   amount: number
   dueDay: number
   notes: string
+  oneOff?: boolean
 }) {
   const weekday = input.weekday
   const startMinutes = input.startMinutes
   const duration = input.durationMinutes
-  const billingType = input.billingType
+  const oneOff = Boolean(input.oneOff)
+  const billingType = oneOff ? "per_lesson" : input.billingType
   const notes = input.notes.trim() || null
 
   if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) {
@@ -56,7 +134,10 @@ export async function assignSlot(input: {
   if (!Number.isFinite(input.amount) || input.amount < 0) {
     return { ok: false as const, error: "Informe o valor." }
   }
-  if (!Number.isInteger(input.dueDay) || input.dueDay < 1 || input.dueDay > 31) {
+  if (
+    !oneOff &&
+    (!Number.isInteger(input.dueDay) || input.dueDay < 1 || input.dueDay > 31)
+  ) {
     return { ok: false as const, error: "Escolha o dia do pagamento." }
   }
   const amount = Math.round(input.amount * 100) / 100
@@ -110,7 +191,7 @@ export async function assignSlot(input: {
   const enrollmentPatch = {
     billing_type: billingType,
     amount,
-    due_day: input.dueDay,
+    due_day: oneOff ? null : input.dueDay,
     notes,
   }
 
@@ -130,7 +211,7 @@ export async function assignSlot(input: {
       return { ok: false as const, error: "Não foi possível abrir a matrícula do aluno." }
     }
     enrollmentId = created.id
-  } else {
+  } else if (!oneOff) {
     const { error } = await supabase
       .from("enrollments")
       .update(enrollmentPatch)
@@ -150,6 +231,7 @@ export async function assignSlot(input: {
       start_time: `${formatMinutes(startMinutes)}:00`,
       duration_minutes: duration,
       valid_from: slotDate,
+      valid_to: oneOff ? slotDate : null,
     })
     .select("id")
     .single()
@@ -158,7 +240,7 @@ export async function assignSlot(input: {
     return { ok: false as const, error: "Não foi possível reservar o horário." }
   }
 
-  const dates = upcomingDates(weekday, slotDate, LESSON_HORIZON)
+  const dates = oneOff ? [slotDate] : upcomingDates(weekday, slotDate, LESSON_HORIZON)
   const { error: lessonsError } = await supabase.from("lessons").insert(
     dates.map((ymd) => ({
       organization_id: organizationId,

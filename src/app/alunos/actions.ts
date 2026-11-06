@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache"
 import { isEmail } from "@/lib/auth-fields"
 import { isValidCpf, onlyDigits } from "@/lib/br-docs"
 import { addDays, saoPauloNow } from "@/lib/schedule"
+import {
+  readStudentPhoto,
+  STUDENT_PHOTO_BUCKET,
+  studentPhotoPath,
+} from "@/lib/student-photo"
+import { isSkillLevel, normalizeStudentColor } from "@/lib/student-profile"
 import { getTeacherContext } from "@/lib/teacher"
 
 export type StudentInput = {
@@ -12,6 +18,9 @@ export type StudentInput = {
   pin: string
   email?: string
   cpf?: string
+  instrument?: string
+  skillLevel?: string
+  color?: string
   zipCode?: string
   street?: string
   streetNumber?: string
@@ -21,7 +30,11 @@ export type StudentInput = {
   state?: string
 }
 
-export type StudentRecord = StudentInput & { id: string }
+export type StudentRecord = StudentInput & {
+  id: string
+  photoPath?: string
+  photoUrl?: string
+}
 
 type ParsedStudent = {
   ok: true
@@ -30,6 +43,9 @@ type ParsedStudent = {
   pin: string
   email: string | null
   cpf: string | null
+  instrument: string | null
+  skillLevel: string | null
+  color: string
   zipCode: string | null
   street: string | null
   streetNumber: string | null
@@ -47,7 +63,7 @@ export async function getStudent(studentId: string) {
   const { data } = await supabase
     .from("students")
     .select(
-      "id, full_name, phone, email, cpf, zip_code, street, street_number, address_complement, neighborhood, city, state",
+      "id, full_name, phone, email, cpf, instrument, skill_level, color, photo_path, zip_code, street, street_number, address_complement, neighborhood, city, state",
     )
     .eq("id", studentId)
     .eq("organization_id", organizationId)
@@ -70,6 +86,11 @@ export async function getStudent(studentId: string) {
       pin: typeof pin === "string" ? pin : "",
       email: (data.email as string | null) ?? "",
       cpf: (data.cpf as string | null) ?? "",
+      instrument: (data.instrument as string | null) ?? "",
+      skillLevel: (data.skill_level as string | null) ?? "",
+      color: normalizeStudentColor((data.color as string | null) ?? ""),
+      photoPath: (data.photo_path as string | null) ?? "",
+      photoUrl: await signedPhotoUrl(supabase, (data.photo_path as string | null) ?? null),
       zipCode: (data.zip_code as string | null) ?? "",
       street: (data.street as string | null) ?? "",
       streetNumber: (data.street_number as string | null) ?? "",
@@ -81,7 +102,7 @@ export async function getStudent(studentId: string) {
   }
 }
 
-export async function createStudent(input: StudentInput) {
+export async function createStudent(input: StudentInput, photo?: File | null) {
   const parsed = parseStudent(input)
   if (!parsed.ok) return parsed
 
@@ -113,12 +134,27 @@ export async function createStudent(input: StudentInput) {
     return fail(writeError(detailsError))
   }
 
+  if (photo) {
+    const saved = await saveStudentPhoto(supabase, organizationId, studentId, photo)
+    if (!saved.ok) {
+      await supabase.from("students").delete().eq("id", studentId)
+      await supabase.storage.from(STUDENT_PHOTO_BUCKET).remove([studentPhotoPath(organizationId, studentId)])
+      return saved
+    }
+  }
+
   revalidatePath("/alunos")
+  revalidatePath(`/alunos/${studentId}`)
   revalidatePath("/agenda")
   return { ok: true as const }
 }
 
-export async function updateStudent(studentId: string, input: StudentInput) {
+export async function updateStudent(
+  studentId: string,
+  input: StudentInput,
+  photo?: File | null,
+  removePhoto = false,
+) {
   const parsed = parseStudent(input)
   if (!parsed.ok) return parsed
 
@@ -160,7 +196,15 @@ export async function updateStudent(studentId: string, input: StudentInput) {
 
   if (error) return fail(writeError(error))
 
+  if (photo) {
+    const saved = await saveStudentPhoto(supabase, organizationId, studentId, photo)
+    if (!saved.ok) return saved
+  } else if (removePhoto) {
+    await removeStudentPhoto(supabase, organizationId, studentId)
+  }
+
   revalidatePath("/alunos")
+  revalidatePath(`/alunos/${studentId}`)
   revalidatePath("/agenda")
   return { ok: true as const }
 }
@@ -169,6 +213,7 @@ export async function deleteStudent(studentId: string) {
   const { supabase, organizationId } = await getTeacherContext()
   if (!organizationId) return fail("Sua conta ainda não tem uma organização.")
 
+  const path = studentPhotoPath(organizationId, studentId)
   const { data, error } = await supabase
     .from("students")
     .delete()
@@ -177,6 +222,8 @@ export async function deleteStudent(studentId: string) {
     .select("id")
 
   if (error || !data?.length) return fail("Não foi possível excluir o aluno.")
+
+  await supabase.storage.from(STUDENT_PHOTO_BUCKET).remove([path])
 
   revalidatePath("/alunos")
   revalidatePath("/agenda")
@@ -190,6 +237,9 @@ function parseStudent(input: StudentInput): ParsedStudent | { ok: false; error: 
   const pin = onlyDigits(input.pin)
   const email = input.email?.trim().toLowerCase() || null
   const cpf = onlyDigits(input.cpf ?? "") || null
+  const instrument = blankToNull(input.instrument)
+  const skillLevel = blankToNull(input.skillLevel)
+  const color = normalizeStudentColor(input.color)
   const zipCode = onlyDigits(input.zipCode ?? "") || null
   const street = blankToNull(input.street)
   const streetNumber = blankToNull(input.streetNumber)
@@ -205,6 +255,9 @@ function parseStudent(input: StudentInput): ParsedStudent | { ok: false; error: 
   if (cpf && !isValidCpf(cpf)) return fail("Informe um CPF válido.")
   if (zipCode && zipCode.length !== 8) return fail("Informe um CEP com 8 dígitos.")
   if (state && !/^[A-Z]{2}$/.test(state)) return fail("Informe a UF com 2 letras.")
+  if (skillLevel && !isSkillLevel(skillLevel)) {
+    return fail("Escolha o nível: iniciante, intermediário ou avançado.")
+  }
 
   return {
     ok: true,
@@ -213,6 +266,9 @@ function parseStudent(input: StudentInput): ParsedStudent | { ok: false; error: 
     pin,
     email,
     cpf,
+    instrument,
+    skillLevel,
+    color,
     zipCode,
     street,
     streetNumber,
@@ -235,6 +291,9 @@ function parseStudent(input: StudentInput): ParsedStudent | { ok: false; error: 
 function studentPatch(student: ParsedStudent) {
   return {
     cpf: student.cpf,
+    instrument: student.instrument,
+    skill_level: student.skillLevel,
+    color: student.color,
     zip_code: student.zipCode,
     street: student.street,
     street_number: student.streetNumber,
@@ -246,17 +305,75 @@ function studentPatch(student: ParsedStudent) {
 }
 
 function writeError(error: { code?: string; message?: string }) {
-  if (error.code === "23505" && error.message?.includes("cpf")) {
-    return "Já existe um aluno com este CPF."
-  }
   if (error.code === "23505") {
-    return "Esse telefone já usa este PIN. Escolha outro."
+    return "Esse telefone já usa este PIN. Escolha outro PIN para este cadastro."
   }
   return "Não foi possível salvar o aluno."
 }
 
 function fail(error: string) {
   return { ok: false as const, error }
+}
+
+type TeacherClient = Awaited<ReturnType<typeof getTeacherContext>>["supabase"]
+
+export async function signedPhotoUrl(supabase: TeacherClient, path: string | null) {
+  if (!path) return ""
+  const { data } = await supabase.storage.from(STUDENT_PHOTO_BUCKET).createSignedUrl(path, 60 * 60)
+  return data?.signedUrl ?? ""
+}
+
+export async function signedPhotoUrls(supabase: TeacherClient, paths: string[]) {
+  const unique = [...new Set(paths.filter(Boolean))]
+  if (unique.length === 0) return new Map<string, string>()
+  const { data } = await supabase.storage.from(STUDENT_PHOTO_BUCKET).createSignedUrls(unique, 60 * 60)
+  const urls = new Map<string, string>()
+  for (const item of data ?? []) {
+    if (item.path && item.signedUrl) urls.set(item.path, item.signedUrl)
+  }
+  return urls
+}
+
+async function saveStudentPhoto(
+  supabase: TeacherClient,
+  organizationId: string,
+  studentId: string,
+  photo: File,
+) {
+  const parsed = await readStudentPhoto(photo)
+  if (!parsed.ok) return parsed
+  const path = studentPhotoPath(organizationId, studentId)
+  const { error } = await supabase.storage.from(STUDENT_PHOTO_BUCKET).upload(
+    path,
+    new Blob([parsed.bytes], { type: "image/jpeg" }),
+    {
+      upsert: true,
+      contentType: "image/jpeg",
+      cacheControl: "3600",
+    },
+  )
+  if (error) return fail("Não foi possível salvar a foto. Tente outra imagem.")
+  const { error: updateError } = await supabase
+    .from("students")
+    .update({ photo_path: path })
+    .eq("id", studentId)
+    .eq("organization_id", organizationId)
+  if (updateError) return fail("A foto subiu, mas não ficou ligada ao aluno.")
+  return { ok: true as const }
+}
+
+async function removeStudentPhoto(
+  supabase: TeacherClient,
+  organizationId: string,
+  studentId: string,
+) {
+  const path = studentPhotoPath(organizationId, studentId)
+  await supabase.storage.from(STUDENT_PHOTO_BUCKET).remove([path])
+  await supabase
+    .from("students")
+    .update({ photo_path: null })
+    .eq("id", studentId)
+    .eq("organization_id", organizationId)
 }
 
 function blankToNull(value: string | undefined) {

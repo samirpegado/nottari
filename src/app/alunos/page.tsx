@@ -1,8 +1,10 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { TeacherShell } from "@/components/teacher/teacher-shell"
 import { StudentsToolbar } from "@/components/teacher/students-toolbar"
-import { StudentsTable, type StudentRow } from "@/components/teacher/students-table"
+import { signedPhotoUrls } from "@/app/alunos/actions"
+import { StudentsList, type StudentRow } from "@/components/teacher/students-list"
+import { WEEKDAY_SHORT, timeToMinutes } from "@/lib/schedule"
+import { normalizeStudentColor } from "@/lib/student-profile"
 import { getTeacherContext } from "@/lib/teacher"
 
 export const metadata: Metadata = {
@@ -31,7 +33,7 @@ export default async function StudentsPage({
   if (organizationId) {
     let request = supabase
       .from("students")
-      .select("id, full_name, phone, email, cpf", { count: "exact" })
+      .select("id, full_name, phone, email, cpf, instrument, skill_level, color, photo_path", { count: "exact" })
       .eq("organization_id", organizationId)
       .eq("active", true)
 
@@ -52,7 +54,32 @@ export default async function StudentsPage({
       .order("full_name", { ascending: true })
       .range(from, to)
 
-    rows = (data ?? []) as StudentRow[]
+    const ids = (data ?? []).map((row) => row.id as string)
+    const photoPaths = (data ?? [])
+      .map((row) => (row.photo_path as string | null) ?? "")
+      .filter(Boolean)
+    const [extras, photos] = await Promise.all([
+      organizationId && ids.length > 0
+        ? studentExtras(supabase, organizationId, ids)
+        : Promise.resolve({
+            nextLesson: new Map<string, string>(),
+            charge: new Map<string, "pending" | "ok">(),
+          }),
+      signedPhotoUrls(supabase, photoPaths),
+    ])
+    rows = (data ?? []).map((row) => ({
+      id: row.id as string,
+      full_name: row.full_name as string,
+      phone: (row.phone as string) ?? "",
+      email: (row.email as string | null) ?? null,
+      cpf: (row.cpf as string | null) ?? null,
+      instrument: (row.instrument as string | null) ?? null,
+      skillLevel: (row.skill_level as string | null) ?? null,
+      color: normalizeStudentColor((row.color as string | null) ?? ""),
+      photoUrl: photos.get((row.photo_path as string | null) ?? "") ?? null,
+      nextLesson: extras.nextLesson.get(row.id as string) ?? null,
+      chargeStatus: extras.charge.get(row.id as string) ?? null,
+    }))
     total = count ?? 0
   }
 
@@ -74,72 +101,84 @@ export default async function StudentsPage({
             Cadastre o aluno aqui. O horário fixo da aula fica na Agenda.
           </p>
         </div>
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <StudentsToolbar query={query} />
-        </div>
       </header>
 
-      <section className="mt-6 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-[#0B1220]/5">
-        <StudentsTable
+      <section className="mt-6">
+        <div className="pb-4">
+          <StudentsToolbar query={query} />
+        </div>
+        <StudentsList
           rows={rows}
+          query={query}
+          page={page}
+          pages={pages}
+          total={total}
+          showingFrom={showingFrom}
+          showingTo={showingTo}
           emptyLabel={
             query
               ? "Nenhum aluno encontrado para essa busca."
               : "Nenhum aluno ainda. Use Adicionar aluno para fazer o primeiro cadastro."
           }
         />
-
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#0B1220]/5 px-5 py-3 text-sm text-[#64748B]">
-          <p>
-            {showingFrom}–{showingTo} de {total}
-          </p>
-          <div className="flex items-center gap-2">
-            <PageLink query={query} page={page - 1} disabled={page <= 1}>
-              Anterior
-            </PageLink>
-            <span className="tabular-nums">
-              {page} / {pages}
-            </span>
-            <PageLink query={query} page={page + 1} disabled={page >= pages}>
-              Próxima
-            </PageLink>
-          </div>
-        </footer>
       </section>
     </TeacherShell>
   )
 }
 
-function PageLink({
-  query,
-  page,
-  disabled,
-  children,
-}: {
-  query: string
-  page: number
-  disabled: boolean
-  children: React.ReactNode
-}) {
-  if (disabled) {
-    return (
-      <span className="rounded-lg px-3 py-1.5 font-medium text-[#94A3B8]">{children}</span>
-    )
-  }
-  const params = new URLSearchParams()
-  if (query) params.set("q", query)
-  if (page > 1) params.set("page", String(page))
-  const href = params.toString() ? `/alunos?${params.toString()}` : "/alunos"
-  return (
-    <Link
-      href={href}
-      className="rounded-lg px-3 py-1.5 font-medium text-[#0B1220] hover:bg-[#F8FAFC]"
-    >
-      {children}
-    </Link>
-  )
-}
-
 function filterTerm(value: string) {
   return value.replace(/[%_,()\\]/g, "").trim()
+}
+
+async function studentExtras(
+  supabase: Awaited<ReturnType<typeof getTeacherContext>>["supabase"],
+  organizationId: string,
+  studentIds: string[],
+) {
+  const [rulesResult, chargesResult] = await Promise.all([
+    supabase
+      .from("schedule_rules")
+      .select("weekday, start_time, enrollments!inner(student_id)")
+      .eq("organization_id", organizationId)
+      .eq("active", true)
+      .in("enrollments.student_id", studentIds),
+    supabase
+      .from("charges")
+      .select("status, enrollments!inner(student_id)")
+      .eq("organization_id", organizationId)
+      .in("enrollments.student_id", studentIds)
+      .in("status", ["pending", "overdue", "paid"]),
+  ])
+
+  const nextLesson = new Map<string, string>()
+  for (const rule of rulesResult.data ?? []) {
+    const studentId = one((rule as { enrollments?: { student_id: string } | { student_id: string }[] }).enrollments)
+      ?.student_id
+    if (!studentId || nextLesson.has(studentId)) continue
+    const weekday = Number(rule.weekday)
+    const minutes = timeToMinutes(String(rule.start_time))
+    const hours = String(Math.floor(minutes / 60)).padStart(2, "0")
+    const rest = String(minutes % 60).padStart(2, "0")
+    nextLesson.set(studentId, `${WEEKDAY_SHORT[weekday]}, ${hours}:${rest}`)
+  }
+
+  const charge = new Map<string, "pending" | "ok">()
+  for (const row of chargesResult.data ?? []) {
+    const studentId = one((row as { enrollments?: { student_id: string } | { student_id: string }[] }).enrollments)
+      ?.student_id
+    if (!studentId) continue
+    const pending = row.status === "pending" || row.status === "overdue"
+    if (pending) charge.set(studentId, "pending")
+    else if (!charge.has(studentId)) charge.set(studentId, "ok")
+  }
+  for (const id of studentIds) {
+    if (nextLesson.has(id) && !charge.has(id)) charge.set(id, "ok")
+  }
+
+  return { nextLesson, charge }
+}
+
+function one<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null
+  return Array.isArray(value) ? (value[0] ?? null) : value
 }

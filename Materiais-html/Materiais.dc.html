@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Nottari – Materiais</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:'Outfit',system-ui,sans-serif;background:#f4f7fb;color:#0b1220}
+a{text-decoration:none}
+.nav:hover{background:rgba(148,163,184,.12);color:#e2e8f0}
+.tree:hover{background:#f1f5f9}
+.fcard{transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease}
+.fcard:hover{transform:translateY(-2px);box-shadow:0 14px 30px -18px rgba(15,23,42,.35);border-color:#c7d2fe}
+.row:hover{background:#f8fafc}
+.ghost:hover{background:#f1f5f9}
+.sec:hover{background:#f1f5f9;border-color:#cbd5e1}
+.drop:hover{border-color:#3b82f6;background:#eff6ff}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height: 980px; display: flex; flex-wrap: wrap; font-family: 'Outfit', system-ui, sans-serif; background: #f4f7fb; color: #0b1220">
+
+<!-- SIDEBAR -->
+<aside style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: #0a1220; padding: 28px 12px 20px; display: flex; flex-direction: column; gap: 6px; min-height: 360px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 12px 28px">
+<svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true"><rect width="34" height="34" rx="10" fill="#3b82f6"></rect><path d="M13 24V11l10-2v12" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="10.5" cy="24" r="2.5" fill="#fff"></circle><circle cx="20.5" cy="21.5" r="2.5" fill="#fff"></circle></svg>
+<span style="font-size: 28px; font-weight: 600; color: #ffffff; letter-spacing: -0.5px">nottari</span>
+</div>
+
+<a class="nav" href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 12px; color: #94a3b8; font-size: 15px; font-weight: 500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg>Início</a>
+<a class="nav" href="Main.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 12px; color: #94a3b8; font-size: 15px; font-weight: 500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>Alunos</a>
+<a class="nav" href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 12px; color: #94a3b8; font-size: 15px; font-weight: 500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>Agenda</a>
+<a class="nav" href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 12px; color: #94a3b8; font-size: 15px; font-weight: 500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h15V7"></path><path d="M16 14h.01"></path></svg>Mensalidades</a>
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 12px; background: #3b82f6; color: #ffffff; font-size: 15px; font-weight: 600; box-shadow: 0 8px 20px -8px rgba(59,130,246,.8)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"></path><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"></path></svg>Materiais</a>
+<a class="nav" href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 12px; color: #94a3b8; font-size: 15px; font-weight: 500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"></path><circle cx="16" cy="6" r="2"></circle><circle cx="10" cy="12" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>Configurações</a>
+
+<div style="margin-top: auto; border-top: 1px solid #1e293b; padding: 18px 12px 0; display: flex; align-items: center; gap: 12px">
+<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#3b82f6,#06b6d4); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex: 0 0 auto">SG</div>
+<div style="min-width: 0; display: flex; flex-direction: column">
+<span style="color: #ffffff; font-size: 14px; font-weight: 600">Samir Gomes</span>
+<a href="#" style="color: #94a3b8; font-size: 13px; min-height: 24px; display: flex; align-items: center">Sair</a>
+</div>
+</div>
+</aside>
+
+<!-- MAIN -->
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 36px 40px 48px; display: flex; flex-direction: column; gap: 28px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 1.4px; color: #475569">MATERIAIS</span>
+<h1 style="margin: 0; font-size: 40px; line-height: 1.1; font-weight: 700; letter-spacing: -1px; color: #0b1220">Sua biblioteca</h1>
+<p style="margin: 0; font-size: 16px; color: #475569">Organize o que você disponibiliza para os alunos.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<button class="sec" type="button" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border: 1px solid #dbe3ee; border-radius: 14px; background: #ffffff; color: #1e293b; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M12 11v4M10 13h4"></path></svg>Nova pasta</button>
+<button class="sec" type="button" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border: 1px solid #dbe3ee; border-radius: 14px; background: #ffffff; color: #1e293b; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>Adicionar link</button>
+<button type="button" style="display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px; border: 0; border-radius: 14px; background: linear-gradient(135deg,#3b82f6,#2563eb); color: #ffffff; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 12px 24px -10px rgba(37,99,235,.7)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg>Enviar arquivo</button>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 22px">
+
+<!-- PASTAS / TIPOS -->
+<nav aria-label="Pastas e tipos" style="flex: 0 0 252px; max-width: 100%; box-sizing: border-box; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 22px; padding: 16px 12px 18px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; color: #475569; padding: 4px 12px 8px">PASTAS</span>
+
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; background: #eff6ff; color: #1d4ed8; font-size: 15px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg><span style="flex: 1">Todos os materiais</span><span style="font-size: 13px; font-weight: 500">15</span></a>
+
+<a class="tree" href="#" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: #1e293b; font-size: 15px; font-weight: 500"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg><svg width="18" height="18" viewBox="0 0 24 24" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span style="flex: 1">Violão</span><span style="font-size: 13px; color: #64748b">5</span></a>
+<a class="tree" href="#" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px 0 44px; border-radius: 12px; color: #334155; font-size: 14px; font-weight: 500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span style="flex: 1">Iniciante</span><span style="font-size: 13px; color: #64748b">3</span></a>
+<a class="tree" href="#" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px 0 44px; border-radius: 12px; color: #334155; font-size: 14px; font-weight: 500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span style="flex: 1">Acordes</span><span style="font-size: 13px; color: #64748b">2</span></a>
+
+<a class="tree" href="#" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: #1e293b; font-size: 15px; font-weight: 500"><span style="width: 14px; flex: 0 0 auto"></span><svg width="18" height="18" viewBox="0 0 24 24" fill="#bfdbfe" stroke="#1d4ed8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span style="flex: 1">Piano</span><span style="font-size: 13px; color: #64748b">3</span></a>
+<a class="tree" href="#" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: #1e293b; font-size: 15px; font-weight: 500"><span style="width: 14px; flex: 0 0 auto"></span><svg width="18" height="18" viewBox="0 0 24 24" fill="#99f6e4" stroke="#0f766e" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span style="flex: 1">Teoria musical</span><span style="font-size: 13px; color: #64748b">3</span></a>
+
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; color: #475569; padding: 18px 12px 8px">TIPOS</span>
+
+<a class="tree" href="#" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: #1e293b; font-size: 15px; font-weight: 500"><span style="width: 28px; height: 28px; border-radius: 8px; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span><span style="flex: 1">PDF</span><span style="font-size: 13px; color: #64748b">6</span></a>
+<a class="tree" href="#" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: #1e293b; font-size: 15px; font-weight: 500"><span style="width: 28px; height: 28px; border-radius: 8px; background: #dbeafe; color: #1d4ed8; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span><span style="flex: 1">Word</span><span style="font-size: 13px; color: #64748b">3</span></a>
+<a class="tree" href="#" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: #1e293b; font-size: 15px; font-weight: 500"><span style="width: 28px; height: 28px; border-radius: 8px; background: #f3e8ff; color: #7e22ce; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></span><span style="flex: 1">Áudio (MP3)</span><span style="font-size: 13px; color: #64748b">3</span></a>
+<a class="tree" href="#" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: #1e293b; font-size: 15px; font-weight: 500"><span style="width: 28px; height: 28px; border-radius: 8px; background: #ffedd5; color: #c2410c; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m10 8.5 5 3.5-5 3.5z"></path></svg></span><span style="flex: 1">Vídeos (links)</span><span style="font-size: 13px; color: #64748b">3</span></a>
+</nav>
+
+<!-- ÁREA DE ARQUIVOS -->
+<section style="flex: 1 1 520px; min-width: 0; box-sizing: border-box; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 22px; padding: 20px 20px 24px; display: flex; flex-direction: column; gap: 22px">
+
+<!-- barra: caminho + busca + visualização -->
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 15px; color: #475569">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+<span style="font-weight: 600; color: #0b1220">Todos os materiais</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<label style="position: relative; display: block">
+<span style="position: absolute; left: 14px; top: 0; bottom: 0; display: flex; align-items: center; color: #64748b"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
+<input type="search" aria-label="Buscar material" placeholder="Buscar material" style="width: 240px; max-width: 100%; box-sizing: border-box; height: 44px; padding: 0 14px 0 40px; border: 1px solid #dbe3ee; border-radius: 12px; background: #f8fafc; font-family: inherit; font-size: 14px; color: #0b1220">
+</label>
+<div style="display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: #f1f5f9">
+<button type="button" aria-label="Ver em grade" style="width: 40px; height: 40px; border: 0; border-radius: 9px; background: transparent; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg></button>
+<button type="button" aria-label="Ver em lista" aria-pressed="true" style="width: 40px; height: 40px; border: 0; border-radius: 9px; background: #ffffff; color: #0b1220; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 3px rgba(15,23,42,.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg></button>
+</div>
+</div>
+</div>
+
+<!-- Pastas -->
+<div style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600; color: #475569">Pastas · 3</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px">
+
+<a class="fcard" href="#" style="display: flex; align-items: center; gap: 14px; padding: 14px 8px 14px 16px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff; color: #0b1220">
+<span style="width: 46px; height: 46px; border-radius: 14px; background: #f3e8ff; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="24" height="24" viewBox="0 0 24 24" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 600">Violão</span><span style="font-size: 13px; color: #64748b">5 arquivos · 2 subpastas</span></span>
+<span style="width: 36px; height: 44px; display: flex; align-items: center; justify-content: center; color: #64748b" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg></span>
+</a>
+
+<a class="fcard" href="#" style="display: flex; align-items: center; gap: 14px; padding: 14px 8px 14px 16px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff; color: #0b1220">
+<span style="width: 46px; height: 46px; border-radius: 14px; background: #dbeafe; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="24" height="24" viewBox="0 0 24 24" fill="#bfdbfe" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 600">Piano</span><span style="font-size: 13px; color: #64748b">3 arquivos</span></span>
+<span style="width: 36px; height: 44px; display: flex; align-items: center; justify-content: center; color: #64748b" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg></span>
+</a>
+
+<a class="fcard" href="#" style="display: flex; align-items: center; gap: 14px; padding: 14px 8px 14px 16px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff; color: #0b1220">
+<span style="width: 46px; height: 46px; border-radius: 14px; background: #ccfbf1; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="24" height="24" viewBox="0 0 24 24" fill="#99f6e4" stroke="#0f766e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 600">Teoria musical</span><span style="font-size: 13px; color: #64748b">3 arquivos</span></span>
+<span style="width: 36px; height: 44px; display: flex; align-items: center; justify-content: center; color: #64748b" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg></span>
+</a>
+
+</div>
+</div>
+
+<!-- Arquivos -->
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0 0 4px; font-size: 14px; font-weight: 600; color: #475569">Arquivos · 4</h2>
+<div style="overflow-x: auto">
+<div style="min-width: 740px; display: flex; flex-direction: column">
+
+<div style="display: grid; grid-template-columns: minmax(240px, 1fr) 124px 84px 104px 96px 44px; gap: 12px; align-items: center; padding: 0 12px 10px; border-bottom: 1px solid #e8edf4; font-size: 12px; font-weight: 600; letter-spacing: .6px; color: #64748b">
+<span>NOME</span><span>TIPO</span><span>TAMANHO</span><span>COMPARTILHADO</span><span>ATUALIZADO</span><span></span>
+</div>
+
+<!-- PDF -->
+<div class="row" style="display: grid; grid-template-columns: minmax(240px, 1fr) 124px 84px 104px 96px 44px; gap: 12px; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eef2f7; border-radius: 12px">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0">
+<span style="width: 42px; height: 42px; border-radius: 12px; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>
+<span style="min-width: 0; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Escala de Dó maior.pdf</span><span style="font-size: 13px; color: #64748b">2 páginas</span></span>
+</div>
+<span><span style="display: inline-flex; padding: 4px 10px; border-radius: 999px; background: #fee2e2; color: #b91c1c; font-size: 12px; font-weight: 600">PDF</span></span>
+<span style="font-size: 14px; color: #334155">1,2 MB</span>
+<span style="display: flex; align-items: center" title="Micneias Gomes e Samir Gomes"><span style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid #ffffff; background: linear-gradient(135deg,#db2777,#7c3aed); color: #ffffff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 30px; height: 30px">MG</span><span style="margin-left: -8px; border: 2px solid #ffffff; background: linear-gradient(135deg,#2563eb,#0891b2); color: #ffffff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-sizing: border-box; width: 30px; height: 30px">SG</span></span>
+<span style="font-size: 14px; color: #334155">Hoje</span>
+<button class="ghost" type="button" aria-label="Mais ações para Escala de Dó maior.pdf" style="width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg></button>
+</div>
+
+<!-- Word -->
+<div class="row" style="display: grid; grid-template-columns: minmax(240px, 1fr) 124px 84px 104px 96px 44px; gap: 12px; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eef2f7; border-radius: 12px">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0">
+<span style="width: 42px; height: 42px; border-radius: 12px; background: #dbeafe; color: #1d4ed8; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>
+<span style="min-width: 0; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Exercícios de ritmo.docx</span><span style="font-size: 13px; color: #64748b">4 páginas</span></span>
+</div>
+<span><span style="display: inline-flex; padding: 4px 10px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 600">Word</span></span>
+<span style="font-size: 14px; color: #334155">86 KB</span>
+<span style="display: flex; align-items: center" title="Micneias Gomes"><span style="border: 2px solid #ffffff; background: linear-gradient(135deg,#db2777,#7c3aed); color: #ffffff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-sizing: border-box; width: 30px; height: 30px">MG</span></span>
+<span style="font-size: 14px; color: #334155">Ontem</span>
+<button class="ghost" type="button" aria-label="Mais ações para Exercícios de ritmo.docx" style="width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg></button>
+</div>
+
+<!-- MP3 -->
+<div class="row" style="display: grid; grid-template-columns: minmax(240px, 1fr) 124px 84px 104px 96px 44px; gap: 12px; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eef2f7; border-radius: 12px">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0">
+<span style="width: 42px; height: 42px; border-radius: 12px; background: #f3e8ff; color: #7e22ce; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></span>
+<span style="min-width: 0; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Metrônomo 80 bpm.mp3</span><span style="font-size: 13px; color: #64748b">01:30 min</span></span>
+</div>
+<span><span style="display: inline-flex; padding: 4px 10px; border-radius: 999px; background: #f3e8ff; color: #7e22ce; font-size: 12px; font-weight: 600">Áudio</span></span>
+<span style="font-size: 14px; color: #334155">1,4 MB</span>
+<span style="display: flex; align-items: center" title="Samir Gomes"><span style="border: 2px solid #ffffff; background: linear-gradient(135deg,#2563eb,#0891b2); color: #ffffff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-sizing: border-box; width: 30px; height: 30px">SG</span></span>
+<span style="font-size: 14px; color: #334155">03 nov</span>
+<button class="ghost" type="button" aria-label="Mais ações para Metrônomo 80 bpm.mp3" style="width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg></button>
+</div>
+
+<!-- Link de vídeo -->
+<div class="row" style="display: grid; grid-template-columns: minmax(240px, 1fr) 124px 84px 104px 96px 44px; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0">
+<span style="width: 42px; height: 42px; border-radius: 12px; background: #ffedd5; color: #c2410c; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m10 8.5 5 3.5-5 3.5z"></path></svg></span>
+<span style="min-width: 0; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Aula 3 – Acordes abertos</span><span style="font-size: 13px; color: #64748b">youtube.com</span></span>
+</div>
+<span><span style="display: inline-flex; padding: 4px 10px; border-radius: 999px; background: #ffedd5; color: #c2410c; font-size: 12px; font-weight: 600">Vídeo</span></span>
+<span style="font-size: 14px; color: #64748b">Link</span>
+<span style="display: flex; align-items: center" title="Micneias Gomes e Samir Gomes"><span style="border: 2px solid #ffffff; background: linear-gradient(135deg,#db2777,#7c3aed); color: #ffffff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-sizing: border-box; width: 30px; height: 30px">MG</span><span style="margin-left: -8px; border: 2px solid #ffffff; background: linear-gradient(135deg,#2563eb,#0891b2); color: #ffffff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-sizing: border-box; width: 30px; height: 30px">SG</span></span>
+<span style="font-size: 14px; color: #334155">28 out</span>
+<button class="ghost" type="button" aria-label="Mais ações para Aula 3 – Acordes abertos" style="width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg></button>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- Área de soltar arquivos -->
+<div class="drop" style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px 20px; border: 2px dashed #cbd5e1; border-radius: 16px; transition: border-color .15s ease, background .15s ease">
+<span style="width: 44px; height: 44px; border-radius: 12px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; flex: 0 0 auto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg></span>
+<span style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Arraste arquivos para cá</span><span style="font-size: 13px; color: #475569">PDF, Word e MP3. Para vídeo, use Adicionar link.</span></span>
+<button class="sec" type="button" style="min-height: 44px; padding: 0 18px; border: 1px solid #dbe3ee; border-radius: 12px; background: #ffffff; color: #1e293b; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Escolher arquivos</button>
+</div>
+
+</section>
+</div>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":980}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

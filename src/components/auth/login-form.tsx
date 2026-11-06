@@ -160,7 +160,7 @@ function ProfessorForm() {
           {formError}
         </p>
       ) : null}
-      <Button type="submit" className="mt-1 h-11 w-full font-semibold" disabled={pending}>
+      <Button type="submit" className="mt-1 w-full" disabled={pending}>
         {pending ? "Entrando..." : "Entrar"}
       </Button>
       <p className="text-center text-sm text-muted-foreground">
@@ -222,7 +222,7 @@ function StudentForm() {
         />
         <FieldError message={submitted ? pinError : undefined} />
       </div>
-      <Button type="submit" className="mt-1 h-11 w-full font-semibold">
+      <Button type="submit" className="mt-1 w-full">
         Entrar
       </Button>
     </form>

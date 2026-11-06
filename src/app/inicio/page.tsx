@@ -11,6 +11,7 @@ import { QuickMetronome } from "@/components/teacher/quick-metronome"
 import { StatusDonut } from "@/components/teacher/status-donut"
 import { WeekCalendar, type WeekDay } from "@/components/teacher/week-calendar"
 import { createClient } from "@/lib/supabase/server"
+import { ensureCurrentMonthCharges } from "@/app/mensalidades/actions"
 
 export const metadata: Metadata = {
   title: "Início",
@@ -51,6 +52,8 @@ export default async function TeacherHomePage() {
   const weekStartISO = dayStartISO(weekStart)
   const weekEndISO = dayEndISO(addDaysYmd(weekStart, 6))
   const now = new Date().toISOString()
+
+  if (organizationId) await ensureCurrentMonthCharges()
 
   const [periodResult, weekResult, upcomingResult, chargesResult] =
     organizationId

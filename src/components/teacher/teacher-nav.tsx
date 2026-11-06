@@ -16,12 +16,18 @@ const navigation = [
   { label: "Início", href: "/inicio", icon: House },
   { label: "Alunos", href: "/alunos", icon: Users },
   { label: "Agenda", href: "/agenda", icon: CalendarDays },
-  { label: "Mensalidades", icon: Wallet },
-  { label: "Materiais", icon: Library },
+  { label: "Mensalidades", href: "/mensalidades", icon: Wallet },
+  { label: "Materiais", href: "/materiais", icon: Library },
   { label: "Configurações", icon: Settings },
 ]
 
-export function TeacherNav({ className }: { className?: string }) {
+export function TeacherNav({
+  className,
+  onNavigate,
+}: {
+  className?: string
+  onNavigate?: () => void
+}) {
   const pathname = usePathname()
 
   return (
@@ -49,6 +55,7 @@ export function TeacherNav({ className }: { className?: string }) {
           <Link
             key={item.label}
             href={item.href}
+            onClick={onNavigate}
             aria-current={current ? "page" : undefined}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",

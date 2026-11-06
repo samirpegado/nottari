@@ -22,6 +22,7 @@ export async function getTeacherContext() {
 
   return {
     supabase,
+    userId: auth.user.id,
     organizationId: membership?.organization_id ?? null,
     organizationName: organization?.name || "Sua conta",
     fullName,

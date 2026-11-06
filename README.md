@@ -44,15 +44,18 @@ O schema já está aplicado no Supabase. Principais tabelas (todas com RLS por o
 | --- | --- |
 | `organizations` | Escola ou professor solo (raiz de tudo) |
 | `members` | Professor/dono, vinculado ao usuário de login |
-| `students` | Cadastro do aluno, telefone e PIN de acesso (cifrado) |
+| `students` | Cadastro do aluno, telefone, PIN (cifrado) e foto opcional |
 | `student_sessions` | Sessões por dispositivo após o login do aluno |
 | `enrollments` | Plano, valores e dia de vencimento |
 | `schedule_rules` | Recorrência semanal das aulas |
 | `lessons` | Cada aula, com status (feita, falta, remarcada, reposição) |
 | `lesson_notes` | Registro da aula: peça, BPM, compasso, tarefa |
-| `materials` | PDF, mp3 ou link de vídeo (biblioteca do professor) |
+| `material_folders` | Pastas da biblioteca (com subpastas) |
+| `materials` | PDF, Word, MP3 ou link de vídeo |
 | `material_assignments` | Material atribuído a um aluno |
 | `charges` | Mensalidade com competência, vencimento e status |
+
+Buckets privados no Storage: `student-photos` (JPG) e `materials` (PDF, Word, MP3, até 20 MB). Vídeo da biblioteca é só URL, sem arquivo.
 
 ### RPCs principais
 
@@ -61,6 +64,7 @@ O schema já está aplicado no Supabase. Principais tabelas (todas com RLS por o
 - `get_student_pin(aluno)` / `set_student_pin(aluno, pin)` — professor vê e edita o PIN.
 - `student_login(telefone, pin)` — login do aluno com rate limiting; retorna token de sessão.
 - `student_logout(token)` e `student_home(token)` — logout e leitura da área do aluno (perfil, onde parou, próximas aulas).
+- `ensure_month_charges(organização, competência)` — gera as mensalidades do mês de forma idempotente.
 
 ## Roadmap
 

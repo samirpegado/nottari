@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import { TeacherShell } from "@/components/teacher/teacher-shell"
 import { AgendaBoard, type AgendaBlock } from "@/components/teacher/agenda-board"
-import type { EnrollmentDefaults } from "@/components/teacher/enroll-dialog"
 import {
   COLUMN_WEEKDAYS,
   DAY_END,
@@ -37,10 +36,6 @@ type RuleRow = {
 type EnrollmentJoin = {
   id: string
   student_id: string
-  billing_type: string
-  amount: number | string
-  due_day: number | null
-  notes: string | null
   students:
     | { full_name: string; stage_name: string | null }
     | { full_name: string; stage_name: string | null }[]
@@ -62,29 +57,22 @@ export default async function AgendaPage({
   const { supabase, organizationId, organizationName, fullName } =
     await getTeacherContext()
 
-  const [rulesResult, studentsResult, enrollmentsResult] = organizationId
+  const [rulesResult, studentsCount] = organizationId
     ? await Promise.all([
         supabase
           .from("schedule_rules")
           .select(
-            "id, weekday, start_time, duration_minutes, valid_from, valid_to, active, enrollments(id, student_id, billing_type, amount, due_day, notes, students(full_name, stage_name))",
+            "id, weekday, start_time, duration_minutes, valid_from, valid_to, active, enrollments(id, student_id, students(full_name, stage_name))",
           )
           .eq("organization_id", organizationId)
           .eq("active", true),
         supabase
           .from("students")
-          .select("id, full_name, stage_name, active")
+          .select("id", { count: "exact", head: true })
           .eq("organization_id", organizationId)
-          .eq("active", true)
-          .order("full_name", { ascending: true }),
-        supabase
-          .from("enrollments")
-          .select("student_id, billing_type, amount, due_day, notes, created_at")
-          .eq("organization_id", organizationId)
-          .eq("active", true)
-          .order("created_at", { ascending: false }),
+          .eq("active", true),
       ])
-    : [null, null, null]
+    : [null, null]
 
   const blocks: AgendaBlock[] = ((rulesResult?.data ?? []) as RuleRow[])
     .filter((rule) =>
@@ -97,42 +85,17 @@ export default async function AgendaPage({
     .map((rule) => {
       const enrollment = one(rule.enrollments)
       const student = one(enrollment?.students ?? null)
-      const billing = enrollment?.billing_type === "monthly" ? "monthly" : "per_lesson"
       return {
         id: rule.id,
-        enrollmentId: enrollment?.id ?? "",
         studentId: enrollment?.student_id ?? "",
         weekday: rule.weekday,
         startMinutes: timeToMinutes(rule.start_time),
         durationMinutes: rule.duration_minutes,
         student: student?.stage_name?.trim() || student?.full_name || "Aluno",
-        billingType: billing as "per_lesson" | "monthly",
-        amount: Number(enrollment?.amount ?? 0),
-        dueDay: typeof enrollment?.due_day === "number" ? enrollment.due_day : null,
-        notes: enrollment?.notes ?? "",
       }
     })
 
-  const students = (studentsResult?.data ?? []).map((student) => ({
-    id: student.id as string,
-    name:
-      (student.stage_name as string | null)?.trim() ||
-      (student.full_name as string),
-  }))
-
-  const enrollments: EnrollmentDefaults[] = []
-  for (const row of enrollmentsResult?.data ?? []) {
-    const studentId = row.student_id as string
-    if (enrollments.some((item) => item.studentId === studentId)) continue
-    const billing = row.billing_type === "monthly" ? "monthly" : "per_lesson"
-    enrollments.push({
-      studentId,
-      billingType: billing,
-      amount: Number(row.amount ?? 0),
-      dueDay: typeof row.due_day === "number" ? row.due_day : null,
-      notes: (row.notes as string | null) ?? "",
-    })
-  }
+  const hasStudents = (studentsCount?.count ?? 0) > 0
 
   const days = COLUMN_WEEKDAYS.map((weekday) => {
     const ymd = dateForWeekday(weekMonday, weekday)
@@ -162,8 +125,7 @@ export default async function AgendaPage({
         <AgendaBoard
           days={days}
           blocks={blocks}
-          students={students}
-          enrollments={enrollments}
+          hasStudents={hasStudents}
           weekLabel={weekRangeLabel(weekMonday)}
           prevWeek={addDays(weekMonday, -7)}
           nextWeek={addDays(weekMonday, 7)}

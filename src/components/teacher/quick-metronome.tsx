@@ -2,13 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Minus, Pause, Play, Plus, Volume2, VolumeX } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const MIN_BPM = 40
 const MAX_BPM = 240
 const BEATS_PER_BAR = 4
 
-export function QuickMetronome() {
-  const [bpm, setBpm] = useState(90)
+function clamp(value: number) {
+  return Math.min(MAX_BPM, Math.max(MIN_BPM, Math.round(value)))
+}
+
+export function QuickMetronome({
+  initialBpm = 90,
+  className,
+}: {
+  initialBpm?: number | null
+  className?: string
+}) {
+  const start = clamp(initialBpm ?? 90)
+  const [bpm, setBpm] = useState(start)
   const [playing, setPlaying] = useState(false)
   const [beat, setBeat] = useState(0)
   const [volume, setVolume] = useState(0.8)
@@ -25,7 +37,9 @@ export function QuickMetronome() {
   bpmRef.current = bpm
   volumeRef.current = muted ? 0 : volume
 
-  const clamp = (value: number) => Math.min(MAX_BPM, Math.max(MIN_BPM, value))
+  useEffect(() => {
+    setBpm(clamp(initialBpm ?? 90))
+  }, [initialBpm])
 
   const stop = useCallback(() => {
     if (timerRef.current) {
@@ -111,7 +125,10 @@ export function QuickMetronome() {
   return (
     <section
       aria-label="Metrônomo rápido"
-      className="flex h-full min-h-[28rem] flex-col justify-between gap-6 rounded-2xl bg-[#0B1220] p-6 text-white shadow-sm"
+      className={cn(
+        "flex h-full min-h-[28rem] flex-col justify-between gap-6 rounded-2xl bg-[#0B1220] p-6 text-white shadow-sm",
+        className,
+      )}
     >
       <div className="flex items-center justify-between">
         <div>

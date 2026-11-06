@@ -28,7 +28,7 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname
   const signedIn = Boolean(data.user)
 
-  const teacherArea = ["/inicio", "/alunos", "/agenda"].some(
+  const teacherArea = ["/inicio", "/alunos", "/agenda", "/mensalidades", "/materiais"].some(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   )
   if (teacherArea && !signedIn) {

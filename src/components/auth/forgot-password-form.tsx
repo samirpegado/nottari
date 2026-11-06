@@ -60,7 +60,7 @@ export function ForgotPasswordForm() {
               </p>
             ) : null}
           </div>
-          <Button type="submit" className="h-11 w-full font-semibold">
+          <Button type="submit" className="w-full">
             Enviar link
           </Button>
           <p className="text-center text-sm text-muted-foreground">

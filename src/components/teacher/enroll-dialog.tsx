@@ -2,8 +2,15 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react"
-import { assignSlot, updateSlot } from "@/app/agenda/actions"
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react"
+import {
+  assignSlot,
+  enrollmentPlanFor,
+  searchStudents,
+  updateSlot,
+  type StudentSearchHit,
+} from "@/app/agenda/actions"
+import { Button } from "@/components/ui/button"
 import {
   COLUMN_WEEKDAYS,
   DURATIONS,
@@ -34,38 +41,27 @@ export type EnrollmentEdit = {
   notes: string
 }
 
-export type EnrollmentDefaults = {
-  studentId: string
-  billingType: "per_lesson" | "monthly"
-  amount: number
-  dueDay: number | null
-  notes: string
-}
-
 export function EnrollDialog({
   weekday,
   startMinutes,
   duration,
-  students,
   blocks,
-  enrollments,
   todayYmd,
   nowMinutes,
+  lockedStudent = null,
   editing = null,
   onClose,
 }: {
   weekday: number
   startMinutes: number
   duration: number
-  students: { id: string; name: string }[]
   blocks: { id?: string; weekday: number; startMinutes: number; durationMinutes: number }[]
-  enrollments: EnrollmentDefaults[]
   todayYmd: string
   nowMinutes: number
+  lockedStudent?: { id: string; name: string } | null
   editing?: EnrollmentEdit | null
   onClose: () => void
 }) {
-  const firstStudent = editing?.studentId || students[0]?.id || ""
   const initialPlan = editing
     ? {
         billingType: editing.billingType,
@@ -73,8 +69,9 @@ export function EnrollDialog({
         dueDay: editing.dueDay,
         notes: editing.notes,
       }
-    : planFor(enrollments, firstStudent)
-  const [studentId, setStudentId] = useState(firstStudent)
+    : { billingType: "per_lesson" as const, amount: "", dueDay: null, notes: "" }
+  const [studentId, setStudentId] = useState(editing?.studentId || lockedStudent?.id || "")
+  const [studentLabel, setStudentLabel] = useState(lockedStudent?.name ?? "")
   const [day, setDay] = useState(weekday)
   const [length, setLength] = useState(duration)
   const [start, setStart] = useState(startMinutes)
@@ -84,6 +81,7 @@ export function EnrollDialog({
   const [notes, setNotes] = useState(initialPlan.notes)
   const [notesOpen, setNotesOpen] = useState(Boolean(initialPlan.notes))
   const [periodLabel, setPeriodLabel] = useState<string | null>(null)
+  const [oneOff, setOneOff] = useState(false)
   const [error, setError] = useState<string>()
   const [pending, setPending] = useState(false)
   const router = useRouter()
@@ -95,7 +93,6 @@ export function EnrollDialog({
   )
   const firstDate = nextLessonDate(day, start, { ymd: todayYmd, minutes: nowMinutes })
   const dueDay = pinnedDue ?? Number(firstDate.slice(-2))
-  const studentName = students.find((student) => student.id === studentId)?.name
   const activePeriod =
     PERIODS.find((period) => period.label === periodLabel) ??
     PERIODS.find((period) => start >= period.from && start < period.to) ??
@@ -105,14 +102,18 @@ export function EnrollDialog({
   )
   const slotReady = starts.includes(start)
 
-  function chooseStudent(id: string) {
-    const plan = planFor(enrollments, id)
-    setStudentId(id)
-    setBillingType(plan.billingType)
-    setAmount(plan.amount)
-    setPinnedDue(plan.dueDay)
-    setNotes(plan.notes)
-    setNotesOpen(Boolean(plan.notes))
+  async function chooseStudent(student: StudentSearchHit) {
+    setStudentId(student.id)
+    setStudentLabel(student.name)
+    const result = await enrollmentPlanFor(student.id)
+    if (!result.ok) return
+    if (!oneOff) {
+      setBillingType(result.plan.billingType)
+      setPinnedDue(result.plan.dueDay)
+    }
+    setAmount(result.plan.amount ? formatAmount(result.plan.amount) : "")
+    setNotes(result.plan.notes)
+    setNotesOpen(Boolean(result.plan.notes))
   }
 
   function openStarts(nextDay: number, nextDuration: number) {
@@ -171,17 +172,19 @@ export function EnrollDialog({
           weekday: day,
           startMinutes: start,
           durationMinutes: length,
-          billingType,
+          billingType: oneOff ? "per_lesson" : billingType,
           amount: value,
           dueDay,
           notes,
+          oneOff,
         })
     setPending(false)
     if (!result.ok) {
       setError(result.error)
       return
     }
-    router.push(`/agenda?semana=${mondayOf(firstDate)}&hora=${start}`)
+    if (editing) router.refresh()
+    else router.push(`/agenda?semana=${mondayOf(firstDate)}&hora=${start}`)
     onClose()
   }
 
@@ -189,7 +192,7 @@ export function EnrollDialog({
     ? `${WEEKDAY_LONG[day]}, ${formatMinutes(start)} · ${length} min`
     : "Escolha um horário livre"
   const priceSummary = amount.trim()
-    ? `R$ ${amount.trim()} ${billingType === "monthly" ? "por mês" : "por aula"}`
+    ? `R$ ${amount.trim()} ${oneOff || billingType !== "monthly" ? "por aula" : "por mês"}`
     : "Sem valor"
 
   return (
@@ -203,9 +206,11 @@ export function EnrollDialog({
         <header className="flex items-start justify-between gap-4 px-5 pt-5 pb-4">
           <div>
             <h2 id="enroll-title" className="text-lg font-semibold">
-              {editing ? "Editar matrícula" : "Matricular"}
+              {editing ? "Editar matrícula" : oneOff ? "Aula avulsa" : "Matricular"}
             </h2>
-            <p className="mt-1 text-sm text-[#64748B]">Aluno, horário da semana e cobrança.</p>
+            <p className="mt-1 text-sm text-[#64748B]">
+              {oneOff ? "Uma aula avulsa, sem horário fixo." : "Aluno, horário da semana e cobrança."}
+            </p>
           </div>
           <button
             type="button"
@@ -218,23 +223,54 @@ export function EnrollDialog({
         </header>
 
         <div className="flex flex-col gap-3 overflow-y-auto px-5 pb-4">
-          <Field label="Aluno">
-            {editing ? (
+          <div className="flex flex-col gap-1.5 text-sm font-medium">
+            Aluno
+            {editing || lockedStudent ? (
               <p className="flex h-11 items-center rounded-xl border border-[#0B1220]/10 bg-[#F8FAFC] px-3.5 text-sm font-normal">
-                {studentName ?? "Aluno"}
+                {studentLabel || "Aluno"}
               </p>
             ) : (
-              <SelectMenu
+              <StudentSearch
                 value={studentId}
-                onChange={chooseStudent}
-                options={students.map((student) => ({ value: student.id, label: student.name }))}
-                placeholder="Escolha o aluno"
+                label={studentLabel}
+                onSelect={chooseStudent}
+                onClear={() => setStudentId("")}
               />
             )}
-          </Field>
+          </div>
 
           <section className="rounded-2xl bg-[#F8FAFC] p-4">
-            <h3 className="text-xs font-semibold tracking-wide text-[#94A3B8] uppercase">Aula</h3>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-xs font-semibold tracking-wide text-[#94A3B8] uppercase">Aula</h3>
+              {editing ? null : (
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={oneOff}
+                  onClick={() => {
+                    const next = !oneOff
+                    setOneOff(next)
+                    if (next) setBillingType("per_lesson")
+                  }}
+                  className="flex items-center gap-2 text-sm font-medium text-[#334155]"
+                >
+                  Avulsa
+                  <span
+                    className={cn(
+                      "relative h-6 w-10 shrink-0 rounded-full transition-colors",
+                      oneOff ? "bg-[#3B82F6]" : "bg-[#CBD5E1]",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-sm transition-transform",
+                        oneOff && "translate-x-4",
+                      )}
+                    />
+                  </span>
+                </button>
+              )}
+            </div>
             <div className="mt-3 grid grid-cols-7 gap-1">
               {COLUMN_WEEKDAYS.map((weekday) => (
                 <button
@@ -321,39 +357,43 @@ export function EnrollDialog({
 
             {slotReady ? (
               <p className="mt-3 text-sm text-[#64748B]">
-                Primeira aula {formatLongDate(firstDate)}. Depois, toda {WEEKDAY_LONG[day].toLowerCase()} às {formatMinutes(start)}.
+                {oneOff
+                  ? `Aula avulsa em ${formatLongDate(firstDate)}.`
+                  : `Primeira aula ${formatLongDate(firstDate)}. Depois, toda ${WEEKDAY_LONG[day].toLowerCase()} às ${formatMinutes(start)}.`}
               </p>
             ) : null}
           </section>
 
           <section className="rounded-2xl bg-[#F8FAFC] p-4">
             <h3 className="text-xs font-semibold tracking-wide text-[#94A3B8] uppercase">Pagamento</h3>
-            <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-white p-1 ring-1 ring-[#0B1220]/10">
-              <button
-                type="button"
-                onClick={() => setBillingType("per_lesson")}
-                className={cn(
-                  "h-9 rounded-lg text-sm font-medium",
-                  billingType === "per_lesson" ? "bg-[#0B1220] text-white" : "text-[#64748B]",
-                )}
-              >
-                Hora/aula
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingType("monthly")}
-                className={cn(
-                  "h-9 rounded-lg text-sm font-medium",
-                  billingType === "monthly" ? "bg-[#0B1220] text-white" : "text-[#64748B]",
-                )}
-              >
-                Mensalidade
-              </button>
-            </div>
+            {oneOff ? null : (
+              <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-white p-1 ring-1 ring-[#0B1220]/10">
+                <button
+                  type="button"
+                  onClick={() => setBillingType("per_lesson")}
+                  className={cn(
+                    "h-9 rounded-lg text-sm font-medium",
+                    billingType === "per_lesson" ? "bg-[#0B1220] text-white" : "text-[#64748B]",
+                  )}
+                >
+                  Hora/aula
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingType("monthly")}
+                  className={cn(
+                    "h-9 rounded-lg text-sm font-medium",
+                    billingType === "monthly" ? "bg-[#0B1220] text-white" : "text-[#64748B]",
+                  )}
+                >
+                  Mensalidade
+                </button>
+              </div>
+            )}
 
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className={cn("mt-3 grid grid-cols-1 gap-3", oneOff ? "" : "sm:grid-cols-2")}>
               <label className="flex flex-col gap-1.5 text-sm font-medium">
-                {billingType === "monthly" ? "Valor mensal" : "Valor da aula"}
+                {oneOff || billingType !== "monthly" ? "Valor da aula" : "Valor mensal"}
                 <span className="flex h-11 items-center rounded-xl bg-white px-3 ring-1 ring-[#0B1220]/10 focus-within:ring-[#3B82F6]">
                   <span className="text-sm font-normal text-[#94A3B8]">R$</span>
                   <input
@@ -365,13 +405,15 @@ export function EnrollDialog({
                   />
                 </span>
               </label>
-              <DueDayField value={dueDay} onChange={setPinnedDue} />
+              {oneOff ? null : <DueDayField value={dueDay} onChange={setPinnedDue} />}
             </div>
-            <p className="mt-2 text-sm text-[#64748B]">
-              {billingType === "monthly"
-                ? `A mensalidade vence todo dia ${dueDay}.`
-                : `O pagamento das aulas é acompanhado no dia ${dueDay} de cada mês.`}
-            </p>
+            {oneOff ? null : (
+              <p className="mt-2 text-sm text-[#64748B]">
+                {billingType === "monthly"
+                  ? `A mensalidade vence todo dia ${dueDay}.`
+                  : `O pagamento das aulas é acompanhado no dia ${dueDay} de cada mês.`}
+              </p>
+            )}
           </section>
 
           <section className="rounded-2xl bg-[#F8FAFC] px-4 py-3">
@@ -402,38 +444,46 @@ export function EnrollDialog({
 
         <footer className="flex flex-col gap-3 border-t border-[#0B1220]/8 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{studentName ?? "Escolha o aluno"}</p>
+            <p className="truncate text-sm font-semibold">{studentLabel || "Escolha o aluno"}</p>
             <p className="text-xs text-[#64748B]">
-              {summary} · {priceSummary} · dia {dueDay}
+              {summary} · {priceSummary}
+              {oneOff ? "" : ` · dia ${dueDay}`}
             </p>
           </div>
-          <button
+          <Button
             type="submit"
             disabled={pending || !slotReady || !studentId}
-            className="w-full shrink-0 rounded-xl bg-[#3B82F6] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 sm:w-auto"
+            className="w-full sm:w-auto"
           >
-            {pending ? "Salvando..." : editing ? "Salvar" : "Matricular"}
-          </button>
+            {pending ? "Salvando..." : editing ? "Salvar" : oneOff ? "Agendar aula" : "Matricular"}
+          </Button>
         </footer>
       </form>
     </div>
   )
 }
 
-function SelectMenu({
+function StudentSearch({
   value,
-  onChange,
-  options,
-  placeholder,
+  label,
+  onSelect,
+  onClear,
 }: {
   value: string
-  onChange: (value: string) => void
-  options: { value: string; label: string }[]
-  placeholder: string
+  label: string
+  onSelect: (student: StudentSearchHit) => void | Promise<void>
+  onClear: () => void
 }) {
+  const [query, setQuery] = useState(label)
+  const [hits, setHits] = useState<StudentSearchHit[]>([])
   const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
-  const current = options.find((option) => option.value === value)
+  const request = useRef(0)
+
+  useEffect(() => {
+    setQuery(label)
+  }, [label])
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
@@ -443,47 +493,83 @@ function SelectMenu({
     return () => document.removeEventListener("mousedown", onPointerDown)
   }, [])
 
+  useEffect(() => {
+    const term = query.trim()
+    if (!term || term === label) {
+      setHits([])
+      setLoading(false)
+      return
+    }
+    const timeout = window.setTimeout(() => {
+      const ticket = request.current + 1
+      request.current = ticket
+      setLoading(true)
+      void searchStudents(term).then((result) => {
+        if (ticket !== request.current) return
+        setHits(result.students)
+        setLoading(false)
+        setOpen(true)
+      })
+    }, 250)
+    return () => window.clearTimeout(timeout)
+  }, [query, label])
+
   return (
     <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((currentOpen) => !currentOpen)}
-        className="flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-[#0B1220]/10 bg-white pl-3.5 pr-4 text-left text-sm font-normal"
-      >
-        <span className={current ? "truncate" : "truncate text-[#94A3B8]"}>
-          {current?.label ?? placeholder}
-        </span>
-        <ChevronDown className="mr-1 size-4 shrink-0 text-[#64748B]" />
-      </button>
-      {open ? (
+      <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#94A3B8]" />
+      <input
+        value={query}
+        onChange={(event) => {
+          setQuery(event.target.value)
+          if (value) onClear()
+          setOpen(true)
+        }}
+        onFocus={() => {
+          if (hits.length > 0) setOpen(true)
+        }}
+        placeholder="Buscar por nome, telefone ou CPF"
+        autoComplete="off"
+        className="h-11 w-full rounded-xl border border-[#0B1220]/10 bg-white pr-3 pl-10 text-sm font-normal outline-none focus:border-[#3B82F6]"
+      />
+      {open && query.trim() && query.trim() !== label ? (
         <ul
           role="listbox"
           className="absolute z-20 mt-1.5 max-h-60 w-full overflow-auto rounded-xl border border-[#0B1220]/10 bg-white p-1.5 shadow-lg"
         >
-          {options.map((option) => {
-            const selected = option.value === value
-            return (
-              <li key={option.value}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  onClick={() => {
-                    onChange(option.value)
-                    setOpen(false)
-                  }}
-                  className={cn(
-                    "w-full rounded-lg px-3 py-2.5 text-left text-sm",
-                    selected ? "bg-[#3B82F6] text-white" : "text-[#0B1220] hover:bg-[#F1F5F9]",
-                  )}
-                >
-                  {option.label}
-                </button>
-              </li>
-            )
-          })}
+          {loading ? (
+            <li className="px-3 py-2.5 text-sm text-[#64748B]">Buscando...</li>
+          ) : hits.length === 0 ? (
+            <li className="px-3 py-2.5 text-sm text-[#64748B]">Nenhum aluno encontrado.</li>
+          ) : (
+            hits.map((student) => {
+              const selected = student.id === value
+              return (
+                <li key={student.id}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    onClick={() => {
+                      setQuery(student.name)
+                      setOpen(false)
+                      void onSelect(student)
+                    }}
+                    className={cn(
+                      "flex w-full flex-col rounded-lg px-3 py-2.5 text-left",
+                      selected ? "bg-[#3B82F6] text-white" : "text-[#0B1220] hover:bg-[#F1F5F9]",
+                    )}
+                  >
+                    <span className="text-sm font-medium">{student.name}</span>
+                    {student.instrument ? (
+                      <span className={cn("text-xs", selected ? "text-white/80" : "text-[#64748B]")}>
+                        {student.instrument}
+                      </span>
+                    ) : null}
+                  </button>
+                </li>
+              )
+            })
+          )}
         </ul>
       ) : null}
     </div>
@@ -621,17 +707,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </label>
   )
-}
-
-function planFor(enrollments: EnrollmentDefaults[], studentId: string) {
-  const found = enrollments.find((item) => item.studentId === studentId)
-  if (!found) return { billingType: "per_lesson" as const, amount: "", dueDay: null, notes: "" }
-  return {
-    billingType: found.billingType,
-    amount: formatAmount(found.amount),
-    dueDay: found.dueDay,
-    notes: found.notes,
-  }
 }
 
 function formatAmount(value: number) {
