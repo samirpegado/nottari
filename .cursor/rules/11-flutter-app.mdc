@@ -1,0 +1,13 @@
+---
+description: Flutter conventions for repository work
+globs:
+  - "lib/**/*.dart"
+  - "test/**/*.dart"
+  - "pubspec.yaml"
+alwaysApply: false
+---
+
+- Reuse the current Flutter architecture and state-management approach.
+- Keep widgets small and composable.
+- Isolate data/integration logic from presentation when possible.
+- Document major architectural changes in `.ai/project/architecture/decisions.md`.

@@ -1,0 +1,31 @@
+{
+  "required": [
+    "AGENTS.md",
+    ".ai/manifest.yaml",
+    ".ai/project/overview.md",
+    ".ai/project/stack/current-stack.md",
+    ".ai/project/architecture/structure.md",
+    ".ai/project/rules/coding.md",
+    ".ai/project/rules/testing.md",
+    ".ai/project/rules/security.md",
+    ".ai/project/context-decisions.json",
+    "scripts/bootstrap_ai_context.py",
+    "scripts/doctor_ai_context.py",
+    "scripts/sync_agent_skills.py",
+    "scripts/update_ai_context.py"
+  ],
+  "recommended": [
+    ".github/copilot-instructions.md",
+    ".cursor/rules/00-core.mdc",
+    ".kiro/steering/product.md",
+    ".github/skills/project-bootstrap/SKILL.md",
+    ".kiro/skills/project-bootstrap/SKILL.md",
+    ".github/agents/bootstrap.agent.md",
+    ".kiro/agents/bootstrap.json"
+  ],
+  "generated": [
+    ".ai/project/generated/project-inventory.md",
+    ".ai/project/generated/stack-detection.md",
+    ".ai/project/generated/missing-context.md"
+  ]
+}

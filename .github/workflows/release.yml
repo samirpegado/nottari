@@ -1,0 +1,89 @@
+name: Release every commit
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Validate and publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate AI context
+        run: |
+          python scripts/bootstrap_ai_context.py --check
+          python scripts/doctor_ai_context.py
+
+      - name: Build release assets
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          short_sha="${GITHUB_SHA:0:12}"
+          tag="ai-context-${GITHUB_SHA}"
+          asset="devfy-ai-project-setup-${short_sha}.zip"
+          checksum="${asset}.sha256"
+
+          git archive --format=zip --output="${asset}" "${GITHUB_SHA}"
+          sha256sum "${asset}" > "${checksum}"
+
+          commit_subject="$(git log -1 --pretty=%s "${GITHUB_SHA}")"
+          {
+            echo "tag=${tag}"
+            echo "asset=${asset}"
+            echo "checksum=${checksum}"
+            echo "title=AI Project Setup ${short_sha}"
+            echo "commit_subject=${commit_subject}"
+          } >> "${GITHUB_OUTPUT}"
+
+          cat > release-notes.md <<EOF
+          Release automática do Devfy AI Project Blueprint.
+
+          - Commit: [\`${GITHUB_SHA}\`](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA})
+          - Mensagem: ${commit_subject}
+          - Blueprint: versão 2
+
+          O arquivo \`${asset}\` contém exatamente os arquivos versionados deste commit. Valide-o com \`${checksum}\`.
+          EOF
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.package.outputs.tag }}
+          RELEASE_ASSET: ${{ steps.package.outputs.asset }}
+          RELEASE_CHECKSUM: ${{ steps.package.outputs.checksum }}
+          RELEASE_TITLE: ${{ steps.package.outputs.title }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Release ${RELEASE_TAG} already exists; nothing to do."
+            exit 0
+          fi
+
+          gh release create "${RELEASE_TAG}" \
+            "${RELEASE_ASSET}#Devfy AI Project Setup" \
+            "${RELEASE_CHECKSUM}#SHA-256 checksum" \
+            --target "${GITHUB_SHA}" \
+            --title "${RELEASE_TITLE}" \
+            --notes-file release-notes.md \
+            --latest

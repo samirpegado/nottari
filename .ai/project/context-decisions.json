@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "environment": {
+    "example_file": "undecided"
+  },
+  "flutter": {
+    "state_management": "undecided"
+  }
+}

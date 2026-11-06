@@ -1,0 +1,13 @@
+{
+  "name": "bootstrap",
+  "description": "Bootstrap and refresh repository AI context",
+  "prompt": "file://../../AGENTS.md",
+  "tools": ["read", "write", "shell"],
+  "allowedTools": ["read"],
+  "resources": [
+    "file://README.md",
+    "file://.ai/**/*.md",
+    "skill://.kiro/skills/**/SKILL.md"
+  ],
+  "welcomeMessage": "Ready to bootstrap or refresh this repository context."
+}

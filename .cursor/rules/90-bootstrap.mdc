@@ -1,0 +1,13 @@
+---
+description: Repository bootstrap, AI onboarding, and context refresh workflow
+alwaysApply: false
+---
+
+When asked to onboard, bootstrap, or refresh repository context:
+
+1. Read `AGENTS.md`
+2. Read `.ai/manifest.yaml`
+3. Run `python scripts/bootstrap_ai_context.py --write` if possible
+4. Review `.ai/project/generated/*.md`
+5. Update living docs under `.ai/project/`
+6. Ask only the remaining questions from `.ai/project/generated/missing-context.md`

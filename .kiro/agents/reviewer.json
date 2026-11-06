@@ -1,0 +1,12 @@
+{
+  "name": "reviewer",
+  "description": "Review code and architecture consistency",
+  "prompt": "Review changes for architecture fit, security, testing, and maintainability.",
+  "tools": ["read", "shell"],
+  "allowedTools": ["read"],
+  "resources": [
+    "file://.ai/project/**/*.md",
+    "skill://.kiro/skills/**/SKILL.md"
+  ],
+  "welcomeMessage": "Ready to review code against the living project rules and docs."
+}

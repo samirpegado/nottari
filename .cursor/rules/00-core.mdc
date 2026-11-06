@@ -1,0 +1,10 @@
+---
+description: Shared project rules and bootstrap workflow for Devfy repositories
+alwaysApply: true
+---
+
+- Read `AGENTS.md` and `.ai/manifest.yaml` before major work.
+- Use `.ai/project/` as living project context.
+- If generated docs are missing or stale, run or suggest `python scripts/bootstrap_ai_context.py --write`.
+- Prefer the repository's existing patterns over introducing a new architecture.
+- Update docs when requirements, structure, or stack change materially.

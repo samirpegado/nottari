@@ -1,0 +1,3 @@
+# Local tooling and scratch files that must not affect generated inventory.
+.playwright-mcp/
+teste.yaml

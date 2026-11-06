@@ -1,0 +1,65 @@
+version: 2
+organization: Devfy
+purpose: >-
+  Unified AI project blueprint for setup, onboarding, implementation, review,
+  and documentation maintenance across Cursor, VS Code/Copilot, Kiro, and Antigravity.
+startup_read_order:
+  - AGENTS.md
+  - .ai/project/overview.md
+  - .ai/project/stack/current-stack.md
+  - .ai/project/architecture/structure.md
+  - .ai/project/rules/coding.md
+  - .ai/project/rules/testing.md
+  - .ai/project/rules/security.md
+  - .ai/project/context-decisions.json
+  - .ai/project/generated/project-inventory.md
+  - .ai/project/generated/missing-context.md
+canonical_sources:
+  shared_rules:
+    - AGENTS.md
+  shared_context:
+    - .ai/project/**
+  generated_context:
+    - .ai/project/generated/**
+  canonical_skill:
+    - .ai/shared/skills/project-bootstrap/SKILL.md
+bootstrap:
+  command: python scripts/bootstrap_ai_context.py --write
+  check_command: python scripts/bootstrap_ai_context.py --check
+  expected_outputs:
+    - .ai/project/generated/project-inventory.md
+    - .ai/project/generated/stack-detection.md
+    - .ai/project/generated/missing-context.md
+doctor:
+  command: python scripts/doctor_ai_context.py
+update:
+  command: >-
+    python scripts/update_ai_context.py --target <project-path> --write --refresh
+  source: local authenticated checkout of the private blueprint repository
+  preserves:
+    - .ai/project/** existing files
+    - project-specific IDE and repository files unless --include-guidance is used
+release:
+  trigger: every push to main
+  workflow: .github/workflows/release.yml
+  assets:
+    - devfy-ai-project-setup-<short-sha>.zip
+    - devfy-ai-project-setup-<short-sha>.zip.sha256
+sync:
+  command: python scripts/sync_agent_skills.py
+managed_files:
+  - .ai/project/overview.md
+  - .ai/project/stack/current-stack.md
+  - .ai/project/architecture/structure.md
+  - .ai/project/requirements/technical.md
+principles:
+  - infer from repository first
+  - ask for missing business context second
+  - keep shared rules in AGENTS.md
+  - keep tool-specific deltas minimal
+  - preserve manual content outside managed blocks
+  - persist non-inferable decisions in .ai/project/context-decisions.json
+  - keep generated context fresh and doctor-verifiable
+variants:
+  - nextjs-web
+  - flutter-app
